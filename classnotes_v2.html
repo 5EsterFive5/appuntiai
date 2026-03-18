@@ -1,0 +1,1969 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClassNotes v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0e0e10;
+  --surface: #16161a;
+  --surface2: #1e1e24;
+  --border: #2a2a32;
+  --border2: #38383f;
+  --text: #e8e6e0;
+  --muted: #6b6880;
+  --accent: #7c6af7;
+  --accent2: #a599ff;
+  --green: #4caf82;
+  --red: #e05c5c;
+  --amber: #e8a73c;
+  --tag1: #7c6af7; --tag1b: rgba(124,106,247,0.15);
+  --tag2: #4caf82; --tag2b: rgba(76,175,130,0.15);
+  --tag3: #e8a73c; --tag3b: rgba(232,167,60,0.15);
+  --tag4: #e05c5c; --tag4b: rgba(224,92,92,0.15);
+  --tag5: #5cadda; --tag5b: rgba(92,173,218,0.15);
+  --tag6: #c46be3; --tag6b: rgba(196,107,227,0.15);
+  --tag7: #e8707a; --tag7b: rgba(232,112,122,0.15);
+  --tag8: #4abfbf; --tag8b: rgba(74,191,191,0.15);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── LAYOUT ── */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-logo {
+  padding: 28px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo-text {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.6rem;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.logo-v {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--accent);
+  font-weight: 500;
+  background: rgba(124,106,247,0.15);
+  padding: 2px 7px;
+  border-radius: 3px;
+  margin-left: 6px;
+}
+
+.logo-sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Sidebar nav */
+.sidebar-nav {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.nav-btn:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+.nav-btn.active { color: var(--text); background: rgba(124,106,247,0.12); }
+.nav-btn .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+/* Labels section in sidebar */
+.sidebar-labels {
+  padding: 16px 20px;
+  flex: 1;
+}
+
+.sidebar-section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.tag-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 0.84rem;
+}
+
+.tag-item:hover { background: rgba(255,255,255,0.05); }
+.tag-item.filter-active { background: rgba(255,255,255,0.08); }
+
+.tag-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tag-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text);
+  font-size: 0.83rem;
+}
+
+.tag-count {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tag-del-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 1px 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.tag-item:hover .tag-del-btn { opacity: 1; }
+.tag-del-btn:hover { color: var(--red); }
+
+/* New tag input */
+.new-tag-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.new-tag-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.82rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.new-tag-input:focus { border-color: var(--accent); }
+.new-tag-input::placeholder { color: var(--muted); }
+
+.add-tag-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.add-tag-btn:hover { opacity: 0.85; }
+
+/* Color picker row */
+.color-swatches {
+  display: flex;
+  gap: 5px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.swatch:hover { transform: scale(1.2); }
+.swatch.selected { border-color: white; }
+
+/* ── MAIN ── */
+.main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-header {
+  padding: 24px 32px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+
+.page-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.5rem;
+  color: var(--text);
+}
+
+.header-date {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* ── PANELS ── */
+.panel {
+  display: none;
+  padding: 28px 32px;
+  flex: 1;
+}
+
+.panel.active { display: block; }
+
+/* ── RECORD PANEL ── */
+.record-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .record-grid { grid-template-columns: 1fr; }
+}
+
+/* Recording card */
+.rec-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.rec-card-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+/* Big record button */
+.rec-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+}
+
+.rec-ring {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.rec-ring-svg {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.rec-ring-circle {
+  fill: none;
+  stroke: var(--border2);
+  stroke-width: 2;
+}
+
+.rec-ring-progress {
+  fill: none;
+  stroke: var(--red);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 226;
+  stroke-dashoffset: 226;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.rec-btn {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  transition: all 0.2s;
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.rec-btn.idle { background: rgba(224,92,92,0.12); color: var(--red); }
+.rec-btn.idle:hover { background: rgba(224,92,92,0.22); transform: scale(1.05); }
+.rec-btn.recording { background: var(--red); color: white; animation: rec-pulse 2s infinite; }
+.rec-btn.paused { background: rgba(232,167,60,0.15); color: var(--amber); }
+
+@keyframes rec-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224,92,92,0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(224,92,92,0); }
+}
+
+.rec-status-text {
+  font-size: 0.82rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.rec-timer-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.8rem;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.rec-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  margin-right: 5px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Transcript area */
+.transcript-area {
+  position: relative;
+  min-height: 180px;
+}
+
+.transcript-live {
+  width: 100%;
+  min-height: 180px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: var(--text);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s;
+  white-space: pre-wrap;
+}
+
+.transcript-live:focus { border-color: var(--accent); }
+
+.transcript-placeholder-text {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-style: italic;
+  pointer-events: none;
+}
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(76,175,130,0.15);
+  color: var(--green);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* Session meta */
+.session-meta-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.meta-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+  flex: 1;
+  min-width: 140px;
+}
+
+.meta-input:focus { border-color: var(--accent); }
+.meta-input::placeholder { color: var(--muted); }
+
+/* Tag selector in session */
+.tag-selector-wrap {
+  position: relative;
+}
+
+.tag-select-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s;
+  white-space: nowrap;
+}
+
+.tag-select-btn:hover { border-color: var(--border2); }
+
+.tag-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 8px;
+  z-index: 100;
+  min-width: 200px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  display: none;
+}
+
+.tag-dropdown.open { display: block; }
+
+.tag-dd-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.84rem;
+  transition: background 0.12s;
+}
+
+.tag-dd-item:hover { background: rgba(255,255,255,0.06); }
+.tag-dd-item.selected { background: rgba(124,106,247,0.15); }
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Audio recordings list */
+.recordings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.rec-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+}
+
+.rec-item audio {
+  flex: 1;
+  height: 28px;
+  filter: invert(0.85) hue-rotate(215deg) saturate(0.4);
+}
+
+.rec-item-meta {
+  color: var(--muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── AI PANEL ── */
+.ai-modes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 700px) {
+  .ai-modes { grid-template-columns: repeat(2, 1fr); }
+}
+
+.ai-mode-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+}
+
+.ai-mode-btn:hover { border-color: var(--border2); background: var(--surface2); }
+.ai-mode-btn.active { border-color: var(--accent); background: rgba(124,106,247,0.1); }
+
+.ai-mode-icon { font-size: 1.3rem; margin-bottom: 7px; }
+.ai-mode-name { font-size: 0.85rem; font-weight: 700; display: block; }
+.ai-mode-desc { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+
+.run-ai-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.run-ai-btn:hover { background: var(--accent2); color: var(--bg); }
+.run-ai-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.ai-result-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px;
+  min-height: 160px;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  position: relative;
+  color: var(--text);
+}
+
+.ai-result-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(124,106,247,0.2);
+  color: var(--accent2);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── SESSIONS PANEL ── */
+.sessions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.session-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.session-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.session-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.session-card-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 1.05rem;
+  color: var(--text);
+  line-height: 1.3;
+  flex: 1;
+}
+
+.session-card-date {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+
+.session-card-preview {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.session-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.session-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.session-card:hover .card-actions { opacity: 1; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border2);
+  color: var(--muted);
+}
+
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--surface2); }
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.btn-primary:hover { background: var(--accent2); color: var(--bg); }
+
+.btn-green {
+  background: rgba(76,175,130,0.15);
+  color: var(--green);
+  border-color: rgba(76,175,130,0.3);
+}
+
+.btn-green:hover { background: rgba(76,175,130,0.25); }
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+}
+
+.btn-icon {
+  padding: 6px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+.btn-icon:hover { color: var(--text); border-color: var(--border2); background: var(--surface2); }
+.btn-icon.danger:hover { color: var(--red); border-color: rgba(224,92,92,0.3); }
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* ── DOTS LOADER ── */
+.dots-loader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.dots-loader .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: dot-b 1.2s infinite;
+}
+
+.dots-loader .dot:nth-child(2) { animation-delay: 0.2s; }
+.dots-loader .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dot-b {
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* ── DIVIDER ── */
+.section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 24px 0;
+}
+
+/* ── EMPTY STATE ── */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+
+.empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.empty-text { font-size: 0.9rem; line-height: 1.7; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  z-index: 9999;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all 0.25s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  max-width: 300px;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.ok { border-left: 3px solid var(--green); }
+.toast.err { border-left: 3px solid var(--red); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* Mobile */
+@media (max-width: 700px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: fixed; left: -260px; top: 0; bottom: 0; z-index: 200; transition: left 0.3s; }
+  .sidebar.open { left: 0; }
+  .panel { padding: 20px 16px; }
+  .main-header { padding: 16px; }
+}
+
+/* Waveform bars animation */
+.waveform {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 24px;
+}
+
+.wave-bar {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--red);
+  animation: wave 1s ease-in-out infinite;
+}
+
+.wave-bar:nth-child(1) { animation-delay: 0.0s; height: 8px; }
+.wave-bar:nth-child(2) { animation-delay: 0.1s; height: 16px; }
+.wave-bar:nth-child(3) { animation-delay: 0.2s; height: 24px; }
+.wave-bar:nth-child(4) { animation-delay: 0.3s; height: 14px; }
+.wave-bar:nth-child(5) { animation-delay: 0.4s; height: 20px; }
+.wave-bar:nth-child(6) { animation-delay: 0.15s; height: 10px; }
+.wave-bar:nth-child(7) { animation-delay: 0.25s; height: 18px; }
+
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.6; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+.waveform.hidden { display: none; }
+
+/* Speech unsupported notice */
+.speech-notice {
+  background: rgba(232,167,60,0.1);
+  border: 1px solid rgba(232,167,60,0.25);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  color: var(--amber);
+  display: none;
+}
+
+.interim-text {
+  color: var(--muted);
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div>
+        <span class="logo-text">ClassNotes</span>
+        <span class="logo-v">v2</span>
+      </div>
+      <div class="logo-sub">Quaderno Digitale</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-btn active" onclick="showPanel('record', this)">
+        <span class="nav-icon">🎙</span> Nuova Lezione
+      </button>
+      <button class="nav-btn" onclick="showPanel('ai', this)">
+        <span class="nav-icon">✨</span> Organizza AI
+      </button>
+      <button class="nav-btn" onclick="showPanel('sessions', this)">
+        <span class="nav-icon">📚</span> Lezioni Salvate
+      </button>
+    </nav>
+
+    <div class="sidebar-labels">
+      <div class="sidebar-section-title">
+        Materie
+        <span style="color:var(--muted);font-weight:400" id="labelCount">0</span>
+      </div>
+
+      <!-- All filter -->
+      <div class="tag-list">
+        <div class="tag-item filter-active" id="filterAll" onclick="setFilter(null, this)" style="margin-bottom:4px">
+          <div class="tag-dot" style="background:var(--muted)"></div>
+          <span class="tag-name" style="color:var(--muted)">Tutte le lezioni</span>
+          <span class="tag-count" id="allCount">0</span>
+        </div>
+      </div>
+
+      <div class="tag-list" id="tagList"></div>
+
+      <!-- New tag -->
+      <div class="new-tag-row">
+        <input type="text" class="new-tag-input" id="newTagInput" placeholder="Nuova materia..." maxlength="24" onkeydown="if(event.key==='Enter')addTag()">
+        <button class="add-tag-btn" onclick="addTag()">+</button>
+      </div>
+
+      <div class="color-swatches" id="colorSwatches"></div>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+    <div class="main-header">
+      <div>
+        <div class="page-title" id="panelTitle">Nuova Lezione</div>
+        <div class="header-date" id="headerDate"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary" onclick="saveSession()" id="saveBtn">💾 Salva</button>
+      </div>
+    </div>
+
+    <!-- RECORD PANEL -->
+    <div class="panel active" id="panel-record">
+
+      <!-- Session meta row -->
+      <div class="session-meta-row">
+        <input type="text" class="meta-input" id="metaTitle" placeholder="Titolo lezione (opzionale)">
+        <input type="date" class="meta-input" id="metaDate" style="max-width:160px">
+
+        <!-- Tag picker -->
+        <div class="tag-selector-wrap" id="tagSelectorWrap">
+          <button class="tag-select-btn" onclick="toggleTagDropdown()" id="tagSelectBtn">
+            <span id="tagSelectLabel">🏷 Materia</span>
+            <span style="color:var(--muted);font-size:0.75rem">▾</span>
+          </button>
+          <div class="tag-dropdown" id="tagDropdown"></div>
+        </div>
+      </div>
+
+      <div class="record-grid">
+
+        <!-- Left: Recording controls -->
+        <div class="rec-card">
+          <div class="rec-card-title">🎙 Registrazione + Trascrizione Live</div>
+
+          <div class="speech-notice" id="speechNotice">
+            ⚠️ Il tuo browser non supporta il riconoscimento vocale. Usa Chrome o Edge per la trascrizione automatica.
+          </div>
+
+          <div class="rec-center">
+            <div class="waveform hidden" id="waveform">
+              <div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div>
+            </div>
+
+            <div class="rec-ring" id="recRing">
+              <svg class="rec-ring-svg" viewBox="0 0 76 76">
+                <circle class="rec-ring-circle" cx="38" cy="38" r="36"/>
+                <circle class="rec-ring-progress" id="recProgress" cx="38" cy="38" r="36"/>
+              </svg>
+              <button class="rec-btn idle" id="recBtn" onclick="toggleRecording()">🎙</button>
+            </div>
+
+            <div class="rec-timer-display" id="recTimer">00:00</div>
+            <div class="rec-status-text" id="recStatus">Premi per iniziare</div>
+          </div>
+
+          <div id="audioList" class="recordings-list"></div>
+        </div>
+
+        <!-- Right: Live transcript -->
+        <div class="rec-card">
+          <div class="rec-card-title">
+            📝 Trascrizione in Tempo Reale
+            <span class="live-badge" id="liveBadge" style="display:none">
+              <span class="rec-dot" style="width:5px;height:5px;margin:0"></span>
+              LIVE
+            </span>
+          </div>
+
+          <div class="transcript-area">
+            <div
+              id="transcriptBox"
+              class="transcript-live"
+              contenteditable="true"
+              spellcheck="true"
+              oninput="onNotesInput()"
+            ></div>
+            <div id="transcriptPlaceholder" class="transcript-placeholder-text">
+              La trascrizione apparirà qui mentre parli...<br>
+              <span style="font-size:0.78rem;opacity:0.6">Puoi anche scrivere direttamente</span>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+            <span style="font-size:0.75rem;color:var(--muted)" id="wordCount">0 parole</span>
+            <button class="btn btn-ghost btn-sm" onclick="clearTranscript()">✕ Svuota</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-ghost" onclick="copyNotes()">📋 Copia Testo</button>
+        <button class="btn btn-ghost" onclick="exportPDF('notes')">📄 Esporta PDF</button>
+        <button class="btn btn-primary" onclick="showPanel('ai', document.querySelector('[onclick*=ai]'))">✨ Organizza con AI →</button>
+      </div>
+    </div>
+
+    <!-- AI PANEL -->
+    <div class="panel" id="panel-ai">
+
+      <div style="margin-bottom:20px;font-size:0.85rem;color:var(--muted)">
+        Elabora gli appunti della lezione attuale con l'intelligenza artificiale.
+      </div>
+
+      <div class="ai-modes">
+        <button class="ai-mode-btn active" onclick="selectMode(this,'organize')">
+          <div class="ai-mode-icon">📐</div>
+          <span class="ai-mode-name">Struttura</span>
+          <div class="ai-mode-desc">Organizza in sezioni chiare</div>
+        </button>
+        <button class="ai-mode-btn" onclick="selectMode(this,'summary')">
+          <div class="ai-mode-icon">🔍</div>
+          <span class="ai-mode-name">Riassunto</span>
+          <div class="ai-mode-desc">Punti chiave sintetizzati</div>
+        </button>
+        <button class="ai-mode-btn" onclick="selectMode(this,'flashcards')">
+          <div class="ai-mode-icon">🃏</div>
+          <span class="ai-mode-name">Flashcard</span>
+          <div class="ai-mode-desc">Q&A per il ripasso</div>
+        </button>
+        <button class="ai-mode-btn" onclick="selectMode(this,'mindmap')">
+          <div class="ai-mode-icon">🧠</div>
+          <span class="ai-mode-name">Mappa</span>
+          <div class="ai-mode-desc">Schema concettuale</div>
+        </button>
+        <button class="ai-mode-btn" onclick="selectMode(this,'improve')">
+          <div class="ai-mode-icon">✏️</div>
+          <span class="ai-mode-name">Migliora</span>
+          <div class="ai-mode-desc">Correggi e arricchisci</div>
+        </button>
+        <button class="ai-mode-btn" onclick="selectMode(this,'quiz')">
+          <div class="ai-mode-icon">🎯</div>
+          <span class="ai-mode-name">Quiz</span>
+          <div class="ai-mode-desc">Domande di verifica</div>
+        </button>
+      </div>
+
+      <button class="run-ai-btn" id="runAiBtn" onclick="runAI()">
+        ✨ Elabora con AI
+      </button>
+
+      <div class="ai-result-box" id="aiResultBox">
+        <span style="color:var(--muted);font-style:italic;font-size:0.88rem">
+          Il risultato apparirà qui dopo l'elaborazione...
+        </span>
+      </div>
+
+      <div class="action-row" id="aiActions" style="display:none">
+        <button class="btn btn-ghost" onclick="copyAI()">📋 Copia Testo AI</button>
+        <button class="btn btn-ghost" onclick="exportPDF('ai')">📄 Esporta PDF AI</button>
+        <button class="btn btn-green" onclick="useAsNotes()">📝 Usa come Appunti</button>
+      </div>
+    </div>
+
+    <!-- SESSIONS PANEL -->
+    <div class="panel" id="panel-sessions">
+      <div style="margin-bottom:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:0.82rem;color:var(--muted)" id="sessionsCount"></span>
+      </div>
+      <div class="sessions-grid" id="sessionsGrid"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let isRecording = false;
+let mediaRecorder = null;
+let audioChunks = [];
+let timerInterval = null;
+let seconds = 0;
+let recordings = [];
+let currentAiMode = 'organize';
+let aiText = '';
+let selectedTagId = null;
+let filterTagId = null;
+let newTagColor = 'var(--tag1)';
+
+// Speech Recognition
+let recognition = null;
+let speechSupported = false;
+let finalTranscript = '';
+let interimSpan = null;
+
+// Tag color palette
+const COLORS = [
+  { id:'t1', val:'#7c6af7' },
+  { id:'t2', val:'#4caf82' },
+  { id:'t3', val:'#e8a73c' },
+  { id:'t4', val:'#e05c5c' },
+  { id:'t5', val:'#5cadda' },
+  { id:'t6', val:'#c46be3' },
+  { id:'t7', val:'#e8707a' },
+  { id:'t8', val:'#4abfbf' },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Date
+  const d = new Date();
+  document.getElementById('headerDate').textContent =
+    d.toLocaleDateString('it-IT', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  document.getElementById('metaDate').value = d.toISOString().split('T')[0];
+
+  // Color swatches
+  renderSwatches();
+  newTagColor = COLORS[0].val;
+  document.querySelector('.swatch').classList.add('selected');
+
+  // Tags
+  renderTagSidebar();
+  renderTagDropdown();
+
+  // Speech API
+  initSpeech();
+
+  // Placeholder
+  document.getElementById('transcriptBox').addEventListener('input', updatePlaceholder);
+  updatePlaceholder();
+
+  // Close dropdown on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.tag-selector-wrap')) {
+      document.getElementById('tagDropdown').classList.remove('open');
+    }
+  });
+
+  // Sessions count
+  updateAllCount();
+});
+
+// ═══════════════════════════════════════════════════════════════
+// SPEECH RECOGNITION
+// ═══════════════════════════════════════════════════════════════
+function initSpeech() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    document.getElementById('speechNotice').style.display = 'block';
+    return;
+  }
+  speechSupported = true;
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'it-IT';
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const transcript = e.results[i][0].transcript;
+      if (e.results[i].isFinal) {
+        finalTranscript += transcript + ' ';
+      } else {
+        interim = transcript;
+      }
+    }
+    renderTranscript(finalTranscript, interim);
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error === 'no-speech') return; // ignore
+    if (e.error === 'not-allowed') {
+      showToast('Microfono non autorizzato. Controlla i permessi.', 'err');
+      stopRecording();
+    }
+  };
+
+  recognition.onend = () => {
+    // Auto-restart if still recording
+    if (isRecording) {
+      try { recognition.start(); } catch(e) {}
+    }
+  };
+}
+
+function renderTranscript(final, interim) {
+  const box = document.getElementById('transcriptBox');
+  // Clear and rebuild: final text + italic interim
+  box.innerHTML = '';
+
+  if (final) {
+    const finalNode = document.createTextNode(final);
+    box.appendChild(finalNode);
+  }
+
+  if (interim) {
+    const span = document.createElement('span');
+    span.className = 'interim-text';
+    span.textContent = interim;
+    box.appendChild(span);
+  }
+
+  // Scroll to bottom
+  box.scrollTop = box.scrollHeight;
+  updatePlaceholder();
+  updateWordCount();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RECORDING
+// ═══════════════════════════════════════════════════════════════
+async function toggleRecording() {
+  if (!isRecording) await startRecording();
+  else stopRecording();
+}
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+    mediaRecorder = new MediaRecorder(stream, { mimeType: getSupportedMime() });
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = saveRecording;
+    mediaRecorder.start(500); // collect chunks every 500ms
+
+    isRecording = true;
+    seconds = 0;
+
+    // Start speech recognition
+    if (speechSupported && recognition) {
+      finalTranscript = '';
+      try { recognition.start(); } catch(e) {}
+      document.getElementById('liveBadge').style.display = 'inline-flex';
+    }
+
+    // Timer
+    timerInterval = setInterval(() => {
+      seconds++;
+      const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const s = String(seconds % 60).padStart(2, '0');
+      document.getElementById('recTimer').textContent = `${m}:${s}`;
+      // Ring animation up to 60 min
+      const pct = Math.min(seconds / 3600, 1);
+      document.getElementById('recProgress').style.strokeDashoffset = 226 - (226 * pct);
+    }, 1000);
+
+    const btn = document.getElementById('recBtn');
+    btn.className = 'rec-btn recording';
+    btn.textContent = '⏹';
+    document.getElementById('recStatus').innerHTML = '<span class="rec-dot"></span>Registrazione + trascrizione attive';
+    document.getElementById('waveform').classList.remove('hidden');
+
+  } catch(e) {
+    showToast('Microfono non disponibile. Controlla i permessi del browser.', 'err');
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  if (mediaRecorder) mediaRecorder.stream.getTracks().forEach(t => t.stop());
+  clearInterval(timerInterval);
+  isRecording = false;
+
+  if (speechSupported && recognition) {
+    try { recognition.stop(); } catch(e) {}
+    document.getElementById('liveBadge').style.display = 'none';
+  }
+
+  // Commit any remaining interim text
+  const box = document.getElementById('transcriptBox');
+  const interim = box.querySelector('.interim-text');
+  if (interim) {
+    finalTranscript += interim.textContent + ' ';
+    box.innerHTML = '';
+    box.textContent = finalTranscript.trim();
+    updatePlaceholder();
+    updateWordCount();
+  }
+
+  const btn = document.getElementById('recBtn');
+  btn.className = 'rec-btn idle';
+  btn.textContent = '🎙';
+  document.getElementById('recStatus').textContent = 'Registrazione completata ✓';
+  document.getElementById('waveform').classList.add('hidden');
+
+  showToast('Registrazione salvata!', 'ok');
+}
+
+function saveRecording() {
+  const mime = getSupportedMime();
+  const blob = new Blob(audioChunks, { type: mime });
+  const url = URL.createObjectURL(blob);
+  recordings.push({ url, blob, duration: seconds, time: new Date().toLocaleTimeString('it-IT') });
+  renderAudioList();
+}
+
+function getSupportedMime() {
+  const types = ['audio/webm;codecs=opus','audio/webm','audio/ogg','audio/mp4'];
+  for (const t of types) { if (MediaRecorder.isTypeSupported(t)) return t; }
+  return 'audio/webm';
+}
+
+function renderAudioList() {
+  const el = document.getElementById('audioList');
+  if (recordings.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = recordings.map((r, i) => `
+    <div class="rec-item">
+      <audio controls src="${r.url}"></audio>
+      <span class="rec-item-meta">${Math.floor(r.duration/60)}:${String(r.duration%60).padStart(2,'0')}</span>
+      <button class="btn-icon danger" onclick="deleteRec(${i})">🗑</button>
+    </div>
+  `).join('');
+}
+
+function deleteRec(i) {
+  recordings.splice(i, 1);
+  renderAudioList();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NOTES HELPERS
+// ═══════════════════════════════════════════════════════════════
+function updatePlaceholder() {
+  const box = document.getElementById('transcriptBox');
+  const has = box.textContent.trim().length > 0;
+  document.getElementById('transcriptPlaceholder').style.display = has ? 'none' : 'block';
+}
+
+function onNotesInput() {
+  updatePlaceholder();
+  updateWordCount();
+}
+
+function updateWordCount() {
+  const text = document.getElementById('transcriptBox').textContent.trim();
+  const words = text ? text.split(/\s+/).length : 0;
+  document.getElementById('wordCount').textContent = `${words} parole`;
+}
+
+function getNotes() {
+  return document.getElementById('transcriptBox').textContent.trim();
+}
+
+function clearTranscript() {
+  finalTranscript = '';
+  document.getElementById('transcriptBox').innerHTML = '';
+  updatePlaceholder();
+  updateWordCount();
+}
+
+function copyNotes() {
+  const text = getNotes();
+  if (!text) { showToast('Nessun testo da copiare.', 'err'); return; }
+  navigator.clipboard.writeText(text).then(() => showToast('✓ Testo copiato!', 'ok'))
+    .catch(() => fallbackCopy(text));
+}
+
+function copyAI() {
+  if (!aiText) { showToast('Nessun testo AI da copiare.', 'err'); return; }
+  navigator.clipboard.writeText(aiText).then(() => showToast('✓ Testo AI copiato!', 'ok'))
+    .catch(() => fallbackCopy(aiText));
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  showToast('✓ Testo copiato!', 'ok');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TAGS / LABELS
+// ═══════════════════════════════════════════════════════════════
+function getTags() {
+  try { return JSON.parse(localStorage.getItem('cn_tags') || '[]'); } catch { return []; }
+}
+
+function saveTags(tags) {
+  localStorage.setItem('cn_tags', JSON.stringify(tags));
+}
+
+function renderSwatches() {
+  const el = document.getElementById('colorSwatches');
+  el.innerHTML = COLORS.map(c => `
+    <div class="swatch" style="background:${c.val}" data-color="${c.val}" onclick="selectSwatch(this,'${c.val}')"></div>
+  `).join('');
+}
+
+function selectSwatch(el, color) {
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  newTagColor = color;
+}
+
+function addTag() {
+  const input = document.getElementById('newTagInput');
+  const name = input.value.trim();
+  if (!name) return;
+  const tags = getTags();
+  if (tags.find(t => t.name.toLowerCase() === name.toLowerCase())) {
+    showToast('Materia già esistente.', 'err');
+    return;
+  }
+  tags.push({ id: Date.now(), name, color: newTagColor });
+  saveTags(tags);
+  input.value = '';
+  renderTagSidebar();
+  renderTagDropdown();
+  updateAllCount();
+  showToast(`Materia "${name}" creata!`, 'ok');
+}
+
+function deleteTag(id) {
+  if (!confirm('Eliminare questa materia? Verrà rimossa anche dalle lezioni salvate.')) return;
+  const tags = getTags().filter(t => t.id !== id);
+  saveTags(tags);
+  // Remove from sessions
+  const sessions = getSessions().map(s => ({...s, tagId: s.tagId === id ? null : s.tagId}));
+  localStorage.setItem('cn_sessions', JSON.stringify(sessions));
+  if (selectedTagId === id) { selectedTagId = null; updateTagSelectBtn(); }
+  if (filterTagId === id) { filterTagId = null; }
+  renderTagSidebar();
+  renderTagDropdown();
+  updateAllCount();
+}
+
+function renderTagSidebar() {
+  const tags = getTags();
+  document.getElementById('labelCount').textContent = tags.length;
+  const el = document.getElementById('tagList');
+  if (tags.length === 0) {
+    el.innerHTML = '<div style="font-size:0.78rem;color:var(--muted);padding:4px 10px;font-style:italic">Nessuna materia</div>';
+    return;
+  }
+  const sessions = getSessions();
+  el.innerHTML = tags.map(t => {
+    const count = sessions.filter(s => s.tagId === t.id).length;
+    const active = filterTagId === t.id ? 'filter-active' : '';
+    return `
+      <div class="tag-item ${active}" onclick="setFilter(${t.id}, this)" data-tagid="${t.id}">
+        <div class="tag-dot" style="background:${t.color}"></div>
+        <span class="tag-name">${t.name}</span>
+        <span class="tag-count">${count}</span>
+        <button class="tag-del-btn" onclick="event.stopPropagation();deleteTag(${t.id})">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderTagDropdown() {
+  const tags = getTags();
+  const el = document.getElementById('tagDropdown');
+  let html = `
+    <div class="tag-dd-item ${!selectedTagId ? 'selected' : ''}" onclick="pickTag(null)">
+      <div class="tag-dot" style="background:var(--muted)"></div>
+      <span>Nessuna materia</span>
+    </div>
+  `;
+  html += tags.map(t => `
+    <div class="tag-dd-item ${selectedTagId === t.id ? 'selected' : ''}" onclick="pickTag(${t.id})">
+      <div class="tag-dot" style="background:${t.color}"></div>
+      <span>${t.name}</span>
+    </div>
+  `).join('');
+  el.innerHTML = html;
+}
+
+function toggleTagDropdown() {
+  renderTagDropdown();
+  document.getElementById('tagDropdown').classList.toggle('open');
+}
+
+function pickTag(id) {
+  selectedTagId = id;
+  updateTagSelectBtn();
+  document.getElementById('tagDropdown').classList.remove('open');
+}
+
+function updateTagSelectBtn() {
+  const btn = document.getElementById('tagSelectBtn');
+  const label = document.getElementById('tagSelectLabel');
+  if (!selectedTagId) {
+    label.innerHTML = '🏷 Materia';
+    btn.style.borderColor = '';
+    return;
+  }
+  const tag = getTags().find(t => t.id === selectedTagId);
+  if (tag) {
+    label.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${tag.color};margin-right:5px"></span>${tag.name}`;
+    btn.style.borderColor = tag.color;
+  }
+}
+
+function setFilter(tagId, el) {
+  filterTagId = tagId;
+  document.querySelectorAll('.tag-item').forEach(i => i.classList.remove('filter-active'));
+  el.classList.add('filter-active');
+  if (document.getElementById('panel-sessions').classList.contains('active')) {
+    renderSessions();
+  }
+}
+
+function updateAllCount() {
+  document.getElementById('allCount').textContent = getSessions().length;
+  renderTagSidebar();
+}
+
+function getTagById(id) {
+  if (!id) return null;
+  return getTags().find(t => t.id === id) || null;
+}
+
+function renderTagPill(tagId, small = false) {
+  const tag = getTagById(tagId);
+  if (!tag) return '';
+  const bg = tag.color + '25';
+  return `<span class="tag-pill" style="background:${bg};color:${tag.color};border:1px solid ${tag.color}40;font-size:${small?'0.7rem':'0.75rem'}">${tag.name}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI
+// ═══════════════════════════════════════════════════════════════
+function selectMode(btn, mode) {
+  document.querySelectorAll('.ai-mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentAiMode = mode;
+}
+
+async function runAI() {
+  const notes = getNotes();
+  if (!notes) { showToast('Scrivi prima degli appunti da elaborare!', 'err'); return; }
+
+  const tag = getTagById(selectedTagId);
+  const subject = tag ? tag.name : 'la lezione';
+  const title = document.getElementById('metaTitle').value || '';
+
+  const prompts = {
+    organize: `Sei un assistente per studenti italiani. Organizza questi appunti di "${subject}" in modo chiaro e strutturato. Usa titoli di sezione (con ##), sotto-titoli, punti chiave in elenco puntato. Rendi la struttura logica e facile da studiare. Rispondi solo in italiano.\n\nAppunti:\n${notes}`,
+    summary: `Sei un assistente per studenti italiani. Crea un riassunto chiaro e completo di questi appunti di "${subject}". Evidenzia: concetti fondamentali, definizioni chiave, esempi importanti, conclusioni. Usa un formato leggibile con sezioni. Solo italiano.\n\nAppunti:\n${notes}`,
+    flashcards: `Sei un assistente per studenti italiani. Genera 10-12 flashcard di ripasso da questi appunti di "${subject}". Formato preciso:\n\nDOMANDA: [domanda chiara]\nRISPOSTA: [risposta precisa]\n---\n\nCopri tutti i concetti principali. Solo italiano.\n\nAppunti:\n${notes}`,
+    mindmap: `Sei un assistente per studenti italiani. Crea una mappa concettuale testuale gerarchica di questi appunti di "${subject}". Usa:\n• CONCETTO PRINCIPALE\n  → Sotto-concetto\n    ◦ Dettaglio\n\nMostra chiaramente le relazioni. Solo italiano.\n\nAppunti:\n${notes}`,
+    improve: `Sei un assistente per studenti italiani. Migliora questi appunti di "${subject}": correggi errori grammaticali e di ortografia, completa le frasi incomplete, aggiungi chiarezza dove manca, mantieni il contenuto originale ma rendilo più professionale e completo. Solo italiano.\n\nAppunti:\n${notes}`,
+    quiz: `Sei un assistente per studenti italiani. Genera un quiz da questi appunti di "${subject}" con:\n- 4 domande aperte\n- 4 domande a risposta multipla (con 4 opzioni A/B/C/D)\n- 4 vero/falso\n\nAlla fine includi le risposte corrette. Solo italiano.\n\nAppunti:\n${notes}`
+  };
+
+  const resultEl = document.getElementById('aiResultBox');
+  resultEl.innerHTML = `<div class="dots-loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div> Elaborazione in corso...</div>`;
+  document.getElementById('aiActions').style.display = 'none';
+  document.getElementById('runAiBtn').disabled = true;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1500,
+        messages: [{ role: "user", content: prompts[currentAiMode] }]
+      })
+    });
+
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const data = await res.json();
+    aiText = data.content.map(c => c.text || '').join('\n').trim();
+
+    resultEl.innerHTML = `
+      <span class="ai-result-badge">✨ AI · ${currentAiMode}</span>
+      ${aiText.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}
+    `;
+    document.getElementById('aiActions').style.display = 'flex';
+    showToast('Elaborazione completata!', 'ok');
+
+  } catch(e) {
+    resultEl.innerHTML = `<span style="color:var(--red)">Errore AI: ${e.message}</span>`;
+    showToast('Errore nella chiamata AI.', 'err');
+  } finally {
+    document.getElementById('runAiBtn').disabled = false;
+  }
+}
+
+function useAsNotes() {
+  if (!aiText) return;
+  const box = document.getElementById('transcriptBox');
+  box.textContent = aiText;
+  finalTranscript = aiText;
+  updatePlaceholder();
+  updateWordCount();
+  showPanel('record', document.querySelector('.nav-btn'));
+  showToast('Testo AI usato come appunti!', 'ok');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PDF EXPORT
+// ═══════════════════════════════════════════════════════════════
+function exportPDF(source) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  const tag = getTagById(selectedTagId);
+  const subject = tag ? tag.name : '';
+  const title = document.getElementById('metaTitle').value || 'Appunti';
+  const dateVal = document.getElementById('metaDate').value;
+  const dateStr = dateVal ? new Date(dateVal).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'}) : new Date().toLocaleDateString('it-IT');
+
+  const text = source === 'notes' ? getNotes() : aiText;
+  if (!text) { showToast('Nessun testo da esportare.', 'err'); return; }
+
+  const W = 210, ML = 18, MR = 18, MT = 0, contentW = W - ML - MR;
+  const tagColor = tag ? hexToRgb(tag.color) : null;
+
+  // Dark header bar
+  doc.setFillColor(14, 14, 16);
+  doc.rect(0, 0, W, 42, 'F');
+
+  // Accent strip
+  if (tagColor) {
+    doc.setFillColor(tagColor.r, tagColor.g, tagColor.b);
+    doc.rect(0, 0, 5, 42, 'F');
+  } else {
+    doc.setFillColor(124, 106, 247);
+    doc.rect(0, 0, 5, 42, 'F');
+  }
+
+  // Logo
+  doc.setTextColor(232, 230, 224);
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('ClassNotes', ML + 2, 18);
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(107, 104, 128);
+  doc.text('v2 · Quaderno Digitale', ML + 2, 26);
+
+  // Subject tag
+  if (subject) {
+    const rgb = tagColor || { r:124, g:106, b:247 };
+    doc.setFillColor(rgb.r, rgb.g, rgb.b, 0.2);
+    doc.setTextColor(rgb.r, rgb.g, rgb.b);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text(subject.toUpperCase(), ML + 2, 35);
+  }
+
+  // Date on right
+  doc.setTextColor(107, 104, 128);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text(dateStr, W - MR, 22, { align: 'right' });
+
+  if (source === 'ai') {
+    doc.setTextColor(124, 106, 247);
+    doc.setFontSize(7.5);
+    doc.setFont('helvetica', 'bold');
+    doc.text('✨ ELABORATO CON AI', W - MR, 32, { align: 'right' });
+  }
+
+  let y = 54;
+
+  // Title
+  doc.setTextColor(14, 14, 16);
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  const titleLines = doc.splitTextToSize(title, contentW);
+  doc.text(titleLines, ML, y);
+  y += titleLines.length * 9 + 4;
+
+  // Divider
+  if (tagColor) doc.setDrawColor(tagColor.r, tagColor.g, tagColor.b);
+  else doc.setDrawColor(124, 106, 247);
+  doc.setLineWidth(0.5);
+  doc.line(ML, y, W - MR, y);
+  y += 8;
+
+  // Body text
+  doc.setTextColor(30, 30, 36);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  const lines = doc.splitTextToSize(text, contentW);
+  const lineH = 6.2;
+
+  lines.forEach(line => {
+    if (y + lineH > 282) {
+      doc.addPage();
+
+      // New page bg
+      doc.setFillColor(250, 250, 250);
+      doc.rect(0, 0, W, 297, 'F');
+
+      // Left accent
+      if (tagColor) doc.setFillColor(tagColor.r, tagColor.g, tagColor.b);
+      else doc.setFillColor(124, 106, 247);
+      doc.rect(0, 0, 3, 297, 'F');
+
+      y = 18;
+      doc.setTextColor(30, 30, 36);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+    }
+    doc.text(line, ML, y);
+    y += lineH;
+  });
+
+  // Footer on each page
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7.5);
+    doc.setTextColor(150, 140, 160);
+    doc.setFont('helvetica', 'italic');
+    const footerLeft = [subject, title].filter(Boolean).join(' · ');
+    doc.text(footerLeft, ML, 291);
+    doc.text(`${i} / ${pageCount}`, W - MR, 291, { align: 'right' });
+  }
+
+  const fname = [subject, title, dateVal].filter(Boolean).join('_').replace(/[^a-zA-Z0-9_]/g,'_') + '.pdf';
+  doc.save(fname || 'classnotes.pdf');
+  showToast('📄 PDF esportato!', 'ok');
+}
+
+function hexToRgb(hex) {
+  const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return r ? { r: parseInt(r[1],16), g: parseInt(r[2],16), b: parseInt(r[3],16) } : null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SESSIONS
+// ═══════════════════════════════════════════════════════════════
+function getSessions() {
+  try { return JSON.parse(localStorage.getItem('cn_sessions') || '[]'); } catch { return []; }
+}
+
+function saveSession() {
+  const notes = getNotes();
+  const title = document.getElementById('metaTitle').value.trim();
+  const date = document.getElementById('metaDate').value;
+
+  if (!notes && !title) {
+    showToast('Aggiungi un titolo o degli appunti prima di salvare.', 'err');
+    return;
+  }
+
+  const sessions = getSessions();
+  const session = {
+    id: Date.now(),
+    title: title || 'Lezione senza titolo',
+    date,
+    tagId: selectedTagId,
+    notes,
+    aiText,
+    savedAt: new Date().toISOString()
+  };
+  sessions.unshift(session);
+  localStorage.setItem('cn_sessions', JSON.stringify(sessions));
+  updateAllCount();
+  showToast('✓ Lezione salvata!', 'ok');
+}
+
+function renderSessions() {
+  const all = getSessions();
+  const filtered = filterTagId ? all.filter(s => s.tagId === filterTagId) : all;
+  const el = document.getElementById('sessionsGrid');
+  document.getElementById('sessionsCount').textContent = `${filtered.length} lezione${filtered.length !== 1 ? 'i' : 'e'}`;
+
+  if (filtered.length === 0) {
+    el.innerHTML = `
+      <div class="empty" style="grid-column:1/-1">
+        <div class="empty-icon">📭</div>
+        <div class="empty-text">Nessuna lezione trovata.<br>Registra la tua prima lezione!</div>
+      </div>
+    `;
+    return;
+  }
+
+  el.innerHTML = filtered.map(s => {
+    const dateStr = s.date ? new Date(s.date).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    const preview = s.notes ? s.notes.substring(0, 120) + (s.notes.length > 120 ? '…' : '') : '';
+    return `
+      <div class="session-card" onclick="loadSession(${s.id})">
+        <div class="session-card-header">
+          <div class="session-card-title">${s.title || 'Lezione'}</div>
+          <span class="session-card-date">${dateStr}</span>
+        </div>
+        ${preview ? `<div class="session-card-preview">${preview}</div>` : ''}
+        <div class="session-card-footer">
+          <div class="session-card-tags">${renderTagPill(s.tagId, true)}</div>
+          <div class="card-actions" onclick="event.stopPropagation()">
+            <button class="btn-icon" title="Esporta PDF" onclick="exportSessionPDF(${s.id})">📄</button>
+            <button class="btn-icon danger" title="Elimina" onclick="deleteSession(${s.id})">🗑</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function loadSession(id) {
+  const s = getSessions().find(s => s.id === id);
+  if (!s) return;
+  document.getElementById('metaTitle').value = s.title || '';
+  document.getElementById('metaDate').value = s.date || '';
+  selectedTagId = s.tagId || null;
+  updateTagSelectBtn();
+  const box = document.getElementById('transcriptBox');
+  box.textContent = s.notes || '';
+  finalTranscript = s.notes || '';
+  aiText = s.aiText || '';
+  updatePlaceholder();
+  updateWordCount();
+  if (aiText) {
+    document.getElementById('aiResultBox').innerHTML =
+      `<span class="ai-result-badge">✨ AI</span>${aiText.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}`;
+    document.getElementById('aiActions').style.display = 'flex';
+  }
+  showPanel('record', document.querySelectorAll('.nav-btn')[0]);
+  showToast('Lezione caricata!', 'ok');
+}
+
+function exportSessionPDF(id) {
+  const s = getSessions().find(s => s.id === id);
+  if (!s) return;
+  document.getElementById('metaTitle').value = s.title || '';
+  document.getElementById('metaDate').value = s.date || '';
+  selectedTagId = s.tagId || null;
+  document.getElementById('transcriptBox').textContent = s.notes || '';
+  setTimeout(() => exportPDF('notes'), 50);
+}
+
+function deleteSession(id) {
+  if (!confirm('Eliminare questa lezione?')) return;
+  const sessions = getSessions().filter(s => s.id !== id);
+  localStorage.setItem('cn_sessions', JSON.stringify(sessions));
+  updateAllCount();
+  renderSessions();
+  showToast('Lezione eliminata.', 'ok');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function showPanel(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`panel-${name}`).classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  const titles = { record: 'Nuova Lezione', ai: 'Organizza con AI', sessions: 'Lezioni Salvate' };
+  document.getElementById('panelTitle').textContent = titles[name] || name;
+
+  if (name === 'sessions') renderSessions();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+let toastT = null;
+function showToast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  if (toastT) clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
