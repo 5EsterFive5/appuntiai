@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClassNotes v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --ink: #1a1208;
+  --paper: #faf8f3;
+  --cream: #f2ede0;
+  --gold: #c9a84c;
+  --gold-light: #e8d5a3;
+  --rust: #b85c38;
+  --sage: #5a7a5e;
+  --line: #ddd8cc;
+  --shadow: rgba(26,18,8,0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Lined paper */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: repeating-linear-gradient(transparent, transparent 31px, var(--line) 31px, var(--line) 32px);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Red margin */
+body::after {
+  content: '';
+  position: fixed;
+  left: 72px;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: rgba(184,92,56,0.3);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 48px 40px 80px 90px;
+}
+
+/* ── HEADER ── */
+header {
+  margin-bottom: 40px;
+  border-bottom: 3px double var(--gold);
+  padding-bottom: 22px;
+}
+
+.header-top {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 6px;
+}
+
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.6rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.header-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: rgba(201,168,76,0.12);
+  padding: 2px 9px;
+  border-radius: 20px;
+  border: 1px solid rgba(201,168,76,0.3);
+}
+
+.date-line { font-size: 0.88rem; color: #8a7a5a; font-style: italic; }
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title::after { content:''; flex:1; height:1px; background:var(--line); }
+
+/* ── DIVIDER ── */
+.divider { border:none; border-top:1px dashed var(--line); margin: 30px 0; }
+
+/* ── MATERIA / ETICHETTE ── */
+.materia-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 28px;
+  padding: 14px 16px;
+  background: var(--cream);
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+
+.materia-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-right: 4px;
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.tag-pill .tag-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+}
+
+.tag-pill .tag-x {
+  font-size: 0.65rem;
+  opacity: 0.6;
+  margin-left: 2px;
+  line-height: 1;
+}
+.tag-pill .tag-x:hover { opacity: 1; }
+
+.tag-pill.active {
+  border-color: currentColor;
+  font-weight: 700;
+}
+
+/* New tag inline form */
+.new-tag-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.new-tag-input {
+  background: white;
+  border: 1.5px solid var(--line);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  color: var(--ink);
+  outline: none;
+  width: 130px;
+  transition: border-color 0.15s;
+}
+.new-tag-input:focus { border-color: var(--gold); }
+.new-tag-input::placeholder { color: #bbb0a0; }
+
+.color-swatches {
+  display: flex;
+  gap: 4px;
+}
+
+.swatch {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.swatch:hover { transform: scale(1.2); }
+.swatch.selected { border-color: var(--ink); }
+
+.add-tag-btn {
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  border-radius: 20px;
+  padding: 4px 13px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.add-tag-btn:hover { background: var(--gold); color: var(--ink); }
+
+/* Date in meta row */
+.meta-date-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--line);
+  padding: 3px 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  color: var(--ink);
+  outline: none;
+  cursor: pointer;
+  margin-left: auto;
+}
+.meta-date-input:focus { border-bottom-color: var(--gold); }
+
+.meta-title-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--line);
+  padding: 3px 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  color: var(--ink);
+  outline: none;
+  flex: 1;
+  min-width: 160px;
+  transition: border-color 0.15s;
+}
+.meta-title-input:focus { border-bottom-color: var(--gold); }
+.meta-title-input::placeholder { color: #bbb0a0; font-style: italic; }
+
+/* ── RECORDING ── */
+.rec-section { margin-bottom: 36px; }
+
+.rec-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.btn-rec {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.btn-rec.idle { background: rgba(184,92,56,0.1); color: var(--rust); box-shadow: 0 3px 12px rgba(184,92,56,0.2); }
+.btn-rec.idle:hover { background: rgba(184,92,56,0.18); transform: scale(1.06); }
+.btn-rec.recording { background: var(--rust); color: white; animation: pulse-rec 1.6s infinite; }
+@keyframes pulse-rec {
+  0%,100% { box-shadow: 0 0 0 0 rgba(184,92,56,0.45); }
+  50% { box-shadow: 0 0 0 11px rgba(184,92,56,0); }
+}
+
+.rec-info { display:flex; flex-direction:column; gap:3px; }
+.rec-label { font-size:0.88rem; font-weight:600; }
+.rec-timer { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:700; color:var(--rust); letter-spacing:0.04em; }
+.rec-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--rust); margin-right:5px; animation:blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.live-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  background:rgba(90,122,94,0.1); color:var(--sage);
+  font-size:0.68rem; font-weight:700; padding:3px 9px;
+  border-radius:20px; letter-spacing:0.08em; text-transform:uppercase;
+  border:1px solid rgba(90,122,94,0.3);
+}
+
+/* Speech notice */
+.speech-notice {
+  background:rgba(201,168,76,0.1);
+  border:1px solid rgba(201,168,76,0.3);
+  border-radius:6px;
+  padding:10px 14px;
+  font-size:0.8rem;
+  color:#8a6a20;
+  margin-bottom:14px;
+  display:none;
+}
+
+/* ── NOTES BOX ── */
+.notes-wrap { position:relative; margin-bottom:10px; }
+
+.notes-box {
+  width:100%;
+  min-height:200px;
+  background:white;
+  border:1.5px solid var(--line);
+  border-radius:4px;
+  padding:18px;
+  font-family:'DM Sans',sans-serif;
+  font-size:0.95rem;
+  line-height:1.85;
+  color:var(--ink);
+  outline:none;
+  white-space:pre-wrap;
+  box-shadow:inset 0 2px 8px rgba(0,0,0,0.03);
+  transition:border-color 0.15s;
+}
+.notes-box:focus { border-color:var(--gold); }
+
+.notes-placeholder {
+  position:absolute; top:18px; left:18px;
+  color:#c0b8a8; font-style:italic; font-size:0.92rem;
+  pointer-events:none; line-height:1.75;
+}
+
+.interim-text { color:#a09080; font-style:italic; }
+
+.notes-footer {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:0.76rem; color:#a09080; margin-top:6px;
+}
+
+/* ── AUDIO LIST ── */
+.audio-list { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+
+.audio-item {
+  display:flex; align-items:center; gap:10px;
+  background:var(--cream);
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:9px 12px;
+  font-size:0.82rem;
+}
+.audio-item audio { flex:1; height:30px; }
+.audio-item .a-meta { color:#8a7a5a; font-size:0.75rem; white-space:nowrap; }
+
+/* ── UPLOAD AREA ── */
+.upload-section { margin-bottom: 36px; }
+
+.upload-area {
+  border: 2px dashed var(--line);
+  border-radius: 6px;
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  position: relative;
+}
+.upload-area:hover, .upload-area.drag-over {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.04);
+}
+.upload-area input[type=file] {
+  position:absolute; inset:0; opacity:0; cursor:pointer;
+}
+.upload-icon { font-size:2rem; margin-bottom:8px; }
+.upload-text { font-size:0.9rem; color:var(--ink); font-weight:500; }
+.upload-sub { font-size:0.78rem; color:#a09080; margin-top:4px; }
+
+.upload-queue { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+
+.upload-item {
+  display:flex; align-items:center; gap:10px;
+  background:var(--cream); border:1px solid var(--line);
+  border-radius:4px; padding:10px 14px;
+  font-size:0.85rem;
+}
+.upload-item .u-name { flex:1; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.upload-item .u-size { color:#a09080; font-size:0.75rem; white-space:nowrap; }
+.upload-item .u-status { font-size:0.75rem; white-space:nowrap; }
+.upload-item .u-status.pending { color:#a09080; }
+.upload-item .u-status.running { color:var(--gold); }
+.upload-item .u-status.done { color:var(--sage); }
+.upload-item .u-status.err { color:var(--rust); }
+
+.progress-bar-wrap {
+  height:3px; background:var(--line); border-radius:2px; margin-top:4px; display:none;
+}
+.progress-bar { height:100%; background:var(--gold); border-radius:2px; width:0%; transition:width 0.3s; }
+
+.transcribe-all-btn {
+  margin-top:12px;
+  display:flex; align-items:center; gap:7px;
+  padding:9px 18px;
+  background:var(--ink); color:var(--paper);
+  border:none; border-radius:4px;
+  font-family:'DM Sans',sans-serif; font-size:0.85rem; font-weight:600;
+  cursor:pointer; transition:all 0.2s;
+}
+.transcribe-all-btn:hover { background:var(--gold); color:var(--ink); }
+.transcribe-all-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+/* ── AI SECTION ── */
+.ai-section { margin-bottom: 36px; }
+
+.ai-modes {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+@media(max-width:600px){ .ai-modes{ grid-template-columns:repeat(2,1fr); } }
+
+.ai-mode-btn {
+  background:var(--cream); border:1.5px solid var(--line);
+  border-radius:4px; padding:11px 10px;
+  font-family:'DM Sans',sans-serif; font-size:0.8rem; font-weight:500;
+  cursor:pointer; transition:all 0.15s;
+  text-align:left; color:var(--ink);
+  display:flex; flex-direction:column; gap:2px;
+}
+.ai-mode-btn:hover { border-color:var(--gold); background:rgba(201,168,76,0.06); }
+.ai-mode-btn.active { border-color:var(--gold); background:var(--gold-light); }
+.ai-mode-btn .m-icon { font-size:1.1rem; }
+.ai-mode-btn .m-desc { font-size:0.7rem; color:#8a7a5a; }
+
+.run-ai-btn {
+  width:100%; padding:12px;
+  background:var(--ink); color:var(--paper);
+  border:none; border-radius:4px;
+  font-family:'DM Sans',sans-serif; font-size:0.88rem; font-weight:700;
+  cursor:pointer; transition:all 0.2s;
+  margin-bottom:16px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.run-ai-btn:hover { background:var(--gold); color:var(--ink); }
+.run-ai-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+.ai-result-box {
+  background:white; border:1.5px solid rgba(90,122,94,0.4);
+  border-radius:4px; padding:20px;
+  min-height:120px; font-size:0.92rem; line-height:1.85;
+  white-space:pre-wrap; color:var(--ink); position:relative;
+  box-shadow:inset 0 2px 8px rgba(0,0,0,0.03);
+}
+.ai-badge {
+  position:absolute; top:12px; right:12px;
+  background:rgba(90,122,94,0.15); color:var(--sage);
+  font-size:0.68rem; font-weight:700; padding:2px 8px;
+  border-radius:20px; letter-spacing:0.08em; text-transform:uppercase;
+}
+
+.dots-loader { display:flex; align-items:center; gap:10px; color:#a09080; font-style:italic; font-size:0.88rem; }
+.dots-loader span { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--gold); animation:dotb 1.2s infinite; }
+.dots-loader span:nth-child(2){animation-delay:.2s} .dots-loader span:nth-child(3){animation-delay:.4s}
+@keyframes dotb { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-6px);opacity:1} }
+
+/* ── BUTTONS ── */
+.btn {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 16px; border-radius:4px;
+  font-family:'DM Sans',sans-serif; font-size:0.82rem; font-weight:600;
+  cursor:pointer; border:1.5px solid transparent; transition:all 0.15s;
+}
+.btn-outline { background:transparent; border-color:var(--line); color:var(--ink); }
+.btn-outline:hover { border-color:var(--gold); color:var(--gold); }
+.btn-gold { background:var(--gold); color:var(--ink); border-color:var(--gold); }
+.btn-gold:hover { background:var(--ink); color:var(--paper); }
+.btn-ink { background:var(--ink); color:var(--paper); border-color:var(--ink); }
+.btn-ink:hover { background:var(--gold); color:var(--ink); }
+.btn-sage { background:rgba(90,122,94,0.1); color:var(--sage); border-color:rgba(90,122,94,0.3); }
+.btn-sage:hover { background:var(--sage); color:white; }
+.btn-sm { padding:5px 10px; font-size:0.75rem; }
+.action-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+
+/* ── SESSIONS ── */
+.sessions-section { margin-bottom:36px; }
+
+.sessions-filter {
+  display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; align-items:center;
+}
+.filter-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 12px; border-radius:20px; font-size:0.78rem; font-weight:500;
+  cursor:pointer; border:1.5px solid var(--line); background:transparent; color:#8a7a5a;
+  font-family:'DM Sans',sans-serif; transition:all 0.15s;
+}
+.filter-btn:hover { border-color:var(--gold); color:var(--ink); }
+.filter-btn.active { border-color:var(--ink); color:var(--ink); background:var(--cream); font-weight:700; }
+
+.sessions-list { display:flex; flex-direction:column; gap:10px; }
+
+.session-card {
+  background:var(--cream); border:1px solid var(--line);
+  border-radius:4px; padding:15px 16px;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  cursor:pointer; transition:all 0.18s; gap:12px;
+}
+.session-card:hover { border-color:var(--gold); box-shadow:0 2px 12px var(--shadow); }
+.session-card .s-left { flex:1; min-width:0; }
+.session-card .s-title { font-weight:600; font-size:0.93rem; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.session-card .s-meta { font-size:0.76rem; color:#8a7a5a; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.session-card .s-preview { font-size:0.8rem; color:#8a7a5a; margin-top:5px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
+.session-card .s-actions { display:flex; gap:6px; flex-shrink:0; }
+
+.s-btn { background:none; border:1px solid var(--line); border-radius:3px; padding:4px 9px; font-size:0.75rem; cursor:pointer; font-family:'DM Sans',sans-serif; color:var(--ink); transition:all 0.13s; }
+.s-btn:hover { border-color:var(--gold); color:var(--gold); }
+.s-btn.del:hover { border-color:var(--rust); color:var(--rust); }
+
+.empty-state { text-align:center; padding:32px; color:#a09080; font-style:italic; font-size:0.88rem; }
+
+/* ── TABS ── */
+.tabs { display:flex; gap:0; border-bottom:2px solid var(--line); margin-bottom:24px; }
+.tab-btn { background:none; border:none; padding:9px 18px; font-family:'DM Sans',sans-serif; font-size:0.88rem; font-weight:500; color:#8a7a5a; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.15s; }
+.tab-btn.active { color:var(--ink); border-bottom-color:var(--gold); font-weight:700; }
+.tab-btn:hover:not(.active) { color:var(--ink); }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* ── TOAST ── */
+.toast { position:fixed; bottom:28px; right:28px; background:var(--ink); color:var(--paper); padding:11px 18px; border-radius:4px; font-size:0.84rem; font-weight:500; z-index:9999; transform:translateY(70px); opacity:0; transition:all 0.25s; box-shadow:0 6px 24px rgba(0,0,0,0.2); max-width:300px; }
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.ok { border-left:3px solid var(--sage); }
+.toast.err { border-left:3px solid var(--rust); }
+
+@media(max-width:640px){
+  .app { padding:28px 16px 60px 28px; }
+  body::after { left:18px; }
+  h1 { font-size:1.9rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-top">
+      <h1>ClassNotes</h1>
+      <span class="header-badge">v3</span>
+    </div>
+    <div class="date-line" id="dateDisplay"></div>
+  </header>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('lezione',this)">✏️ Nuova Lezione</button>
+    <button class="tab-btn" onclick="switchTab('salvate',this)">📚 Lezioni Salvate</button>
+  </div>
+
+  <!-- ═══════════ TAB NUOVA LEZIONE ═══════════ -->
+  <div id="tab-lezione" class="tab-panel active">
+
+    <!-- MATERIE / ETICHETTE -->
+    <div class="materia-row">
+      <span class="materia-label">📌 Materia</span>
+
+      <!-- Existing tags -->
+      <div id="tagPillsContainer" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"></div>
+
+      <!-- Divider -->
+      <div style="width:1px;height:20px;background:var(--line);margin:0 4px"></div>
+
+      <!-- New tag form -->
+      <div class="new-tag-form">
+        <input class="new-tag-input" id="newTagInput" placeholder="+ Nuova materia" maxlength="22" onkeydown="if(event.key==='Enter')addTag()">
+        <div class="color-swatches" id="colorSwatches"></div>
+        <button class="add-tag-btn" onclick="addTag()">Aggiungi</button>
+      </div>
+
+      <!-- Date + title on right -->
+      <input type="text" class="meta-title-input" id="metaTitle" placeholder="Titolo lezione…">
+      <input type="date" class="meta-date-input" id="metaDate">
+    </div>
+
+    <!-- ── REGISTRAZIONE ── -->
+    <div class="rec-section">
+      <div class="section-title">🎙 Registrazione + Trascrizione Live</div>
+
+      <div class="speech-notice" id="speechNotice">
+        ⚠️ Il tuo browser non supporta la trascrizione automatica. Usa <strong>Chrome</strong> o <strong>Edge</strong> per la trascrizione live.
+      </div>
+
+      <div class="rec-controls">
+        <button class="btn-rec idle" id="recBtn" onclick="toggleRecording()">🎙</button>
+        <div class="rec-info">
+          <span class="rec-label" id="recLabel">Premi per registrare</span>
+          <span class="rec-timer" id="recTimer">00:00</span>
+        </div>
+        <span class="live-badge" id="liveBadge" style="display:none">
+          <span class="rec-dot" style="width:5px;height:5px;margin:0"></span>LIVE
+        </span>
+      </div>
+
+      <div id="audioList" class="audio-list"></div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ── UPLOAD AUDIO ── -->
+    <div class="upload-section">
+      <div class="section-title">📂 Carica Audio & Trascrivi</div>
+
+      <div class="upload-area" id="uploadArea"
+        ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFiles(event)">
+        <input type="file" id="audioFileInput" accept="audio/*" multiple onchange="handleFiles(this.files)">
+        <div class="upload-icon">🎵</div>
+        <div class="upload-text">Trascina qui i file audio, oppure clicca per selezionarli</div>
+        <div class="upload-sub">MP3, MP4, WAV, M4A, OGG, WEBM — anche più file insieme</div>
+      </div>
+
+      <div id="uploadQueue" class="upload-queue"></div>
+
+      <button class="transcribe-all-btn" id="transcribeAllBtn" onclick="transcribeAll()" style="display:none">
+        ✨ Trascrivi tutti con AI
+      </button>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ── APPUNTI ── -->
+    <div style="margin-bottom:36px">
+      <div class="section-title">📝 Appunti della Lezione</div>
+
+      <div class="notes-wrap">
+        <div id="notesBox" class="notes-box" contenteditable="true" spellcheck="true" oninput="onNotesInput()"></div>
+        <div id="notesPlaceholder" class="notes-placeholder">Scrivi qui i tuoi appunti… oppure usa la registrazione o carica un audio per trascrivere automaticamente.</div>
+      </div>
+
+      <div class="notes-footer">
+        <span id="wordCount">0 parole</span>
+        <button class="btn btn-sm btn-outline" onclick="clearNotes()">✕ Svuota</button>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-outline" onclick="copyNotes()">📋 Copia Testo</button>
+        <button class="btn btn-gold" onclick="exportPDF('notes')">📄 Esporta PDF</button>
+        <button class="btn btn-ink" onclick="saveSession()">💾 Salva Lezione</button>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ── AI ── -->
+    <div class="ai-section">
+      <div class="section-title">✨ Organizza con AI</div>
+
+      <div class="ai-modes">
+        <button class="ai-mode-btn active" onclick="selectMode(this,'organize')">
+          <span class="m-icon">📐</span><strong>Struttura</strong>
+          <span class="m-desc">Organizza in sezioni chiare</span>
+        </button>
+        <button class="ai-mode-btn" onclick="selectMode(this,'summary')">
+          <span class="m-icon">🔍</span><strong>Riassunto</strong>
+          <span class="m-desc">Punti chiave sintetizzati</span>
+        </button>
+        <button class="ai-mode-btn" onclick="selectMode(this,'flashcards')">
+          <span class="m-icon">🃏</span><strong>Flashcard</strong>
+          <span class="m-desc">Q&amp;A per il ripasso</span>
+        </button>
+        <button class="ai-mode-btn" onclick="selectMode(this,'mindmap')">
+          <span class="m-icon">🧠</span><strong>Mappa</strong>
+          <span class="m-desc">Schema concettuale</span>
+        </button>
+        <button class="ai-mode-btn" onclick="selectMode(this,'improve')">
+          <span class="m-icon">✏️</span><strong>Migliora</strong>
+          <span class="m-desc">Correggi e arricchisci</span>
+        </button>
+        <button class="ai-mode-btn" onclick="selectMode(this,'quiz')">
+          <span class="m-icon">🎯</span><strong>Quiz</strong>
+          <span class="m-desc">Domande di verifica</span>
+        </button>
+      </div>
+
+      <button class="run-ai-btn" id="runAiBtn" onclick="runAI()">✨ Elabora con AI</button>
+
+      <div class="ai-result-box" id="aiResultBox">
+        <span style="color:#c0b8a8;font-style:italic;font-size:0.88rem">Il risultato apparirà qui dopo l'elaborazione…</span>
+      </div>
+
+      <div class="action-row" id="aiActions" style="display:none">
+        <button class="btn btn-outline" onclick="copyAI()">📋 Copia Testo AI</button>
+        <button class="btn btn-gold" onclick="exportPDF('ai')">📄 Esporta PDF AI</button>
+        <button class="btn btn-sage" onclick="useAsNotes()">📝 Usa come Appunti</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════ TAB SALVATE ═══════════ -->
+  <div id="tab-salvate" class="tab-panel">
+
+    <div class="section-title">📚 Lezioni Salvate</div>
+
+    <div class="sessions-filter" id="sessionsFilter"></div>
+    <div class="sessions-list" id="sessionsList"></div>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let isRecording = false;
+let mediaRecorder = null;
+let audioChunks = [];
+let timerInterval = null;
+let recSeconds = 0;
+let recordings = [];
+let recognition = null;
+let speechOK = false;
+let finalTranscript = '';
+let currentMode = 'organize';
+let aiText = '';
+let selectedTagId = null;
+let activeFilter = null; // for sessions tab
+let uploadQueue = []; // {file, name, size, status, transcript}
+let newTagColor = '#c9a84c';
+
+const PALETTE = [
+  '#c9a84c','#b85c38','#5a7a5e','#4a7ab5','#9b59b6','#e67e22','#2ecc71','#e74c3c'
+];
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  const d = new Date();
+  document.getElementById('dateDisplay').textContent =
+    d.toLocaleDateString('it-IT',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('metaDate').value = d.toISOString().split('T')[0];
+
+  renderSwatches();
+  renderTagPills();
+  initSpeech();
+
+  document.getElementById('notesBox').addEventListener('input', () => {
+    updatePlaceholder(); updateWordCount();
+  });
+  updatePlaceholder();
+});
+
+// ══════════════════════════════════════════════
+// TAGS
+// ══════════════════════════════════════════════
+function getTags() {
+  try { return JSON.parse(localStorage.getItem('cn_tags')||'[]'); } catch { return []; }
+}
+function saveTags(t) { localStorage.setItem('cn_tags',JSON.stringify(t)); }
+
+function renderSwatches() {
+  document.getElementById('colorSwatches').innerHTML = PALETTE.map(c =>
+    `<div class="swatch${c===newTagColor?' selected':''}" style="background:${c}" onclick="pickColor('${c}',this)"></div>`
+  ).join('');
+}
+
+function pickColor(c, el) {
+  newTagColor = c;
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function addTag() {
+  const input = document.getElementById('newTagInput');
+  const name = input.value.trim();
+  if (!name) return;
+  const tags = getTags();
+  if (tags.find(t => t.name.toLowerCase()===name.toLowerCase())) {
+    showToast('Materia già esistente.','err'); return;
+  }
+  tags.push({ id: Date.now(), name, color: newTagColor });
+  saveTags(tags);
+  input.value = '';
+  renderTagPills();
+  showToast(`Materia "${name}" creata! ✓`,'ok');
+}
+
+function deleteTag(id, e) {
+  e.stopPropagation();
+  if (!confirm('Eliminare questa materia?')) return;
+  const tags = getTags().filter(t => t.id !== id);
+  saveTags(tags);
+  if (selectedTagId === id) selectedTagId = null;
+  renderTagPills();
+}
+
+function selectTag(id) {
+  selectedTagId = selectedTagId === id ? null : id;
+  renderTagPills();
+}
+
+function renderTagPills() {
+  const tags = getTags();
+  const container = document.getElementById('tagPillsContainer');
+  container.innerHTML = tags.map(t => {
+    const active = selectedTagId === t.id;
+    const bg = active ? t.color+'22' : 'transparent';
+    const border = active ? t.color : '#ddd8cc';
+    const textCol = active ? t.color : '#6b6055';
+    return `
+      <span class="tag-pill${active?' active':''}"
+        style="background:${bg};border-color:${border};color:${textCol}"
+        onclick="selectTag(${t.id})">
+        <span class="tag-dot" style="background:${t.color}"></span>
+        ${t.name}
+        <span class="tag-x" onclick="deleteTag(${t.id},event)">✕</span>
+      </span>
+    `;
+  }).join('');
+}
+
+function getTagById(id) {
+  if (!id) return null;
+  return getTags().find(t => t.id === id) || null;
+}
+
+// ══════════════════════════════════════════════
+// SPEECH RECOGNITION
+// ══════════════════════════════════════════════
+function initSpeech() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { document.getElementById('speechNotice').style.display='block'; return; }
+  speechOK = true;
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'it-IT';
+
+  recognition.onresult = e => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) finalTranscript += t + ' ';
+      else interim = t;
+    }
+    renderLiveTranscript(finalTranscript, interim);
+  };
+
+  recognition.onerror = e => {
+    if (e.error === 'no-speech') return;
+    if (e.error === 'not-allowed') { showToast('Microfono non autorizzato.','err'); stopRecording(); }
+  };
+
+  recognition.onend = () => {
+    if (isRecording) { try { recognition.start(); } catch(e){} }
+  };
+}
+
+function renderLiveTranscript(final, interim) {
+  const box = document.getElementById('notesBox');
+  box.innerHTML = '';
+  if (final) box.appendChild(document.createTextNode(final));
+  if (interim) {
+    const s = document.createElement('span');
+    s.className = 'interim-text';
+    s.textContent = interim;
+    box.appendChild(s);
+  }
+  box.scrollTop = box.scrollHeight;
+  updatePlaceholder(); updateWordCount();
+}
+
+// ══════════════════════════════════════════════
+// RECORDING
+// ══════════════════════════════════════════════
+async function toggleRecording() {
+  if (!isRecording) await startRecording(); else stopRecording();
+}
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+    const mime = ['audio/webm;codecs=opus','audio/webm','audio/ogg','audio/mp4']
+      .find(t => MediaRecorder.isTypeSupported(t)) || 'audio/webm';
+    mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
+    mediaRecorder.ondataavailable = e => { if(e.data.size>0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = saveRecording;
+    mediaRecorder.start(500);
+    isRecording = true; recSeconds = 0;
+
+    if (speechOK) {
+      finalTranscript = '';
+      try { recognition.start(); } catch(e){}
+      document.getElementById('liveBadge').style.display='inline-flex';
+    }
+
+    timerInterval = setInterval(() => {
+      recSeconds++;
+      const m = String(Math.floor(recSeconds/60)).padStart(2,'0');
+      const s = String(recSeconds%60).padStart(2,'0');
+      document.getElementById('recTimer').textContent = `${m}:${s}`;
+    }, 1000);
+
+    const btn = document.getElementById('recBtn');
+    btn.className = 'btn-rec recording'; btn.textContent = '⏹';
+    document.getElementById('recLabel').innerHTML = '<span class="rec-dot"></span>Registrazione attiva…';
+  } catch(e) {
+    showToast('Microfono non disponibile. Controlla i permessi.','err');
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder?.state !== 'inactive') mediaRecorder.stop();
+  mediaRecorder?.stream.getTracks().forEach(t => t.stop());
+  clearInterval(timerInterval);
+  isRecording = false;
+
+  if (speechOK) {
+    try { recognition.stop(); } catch(e){}
+    document.getElementById('liveBadge').style.display='none';
+    // Commit interim
+    const box = document.getElementById('notesBox');
+    const interim = box.querySelector('.interim-text');
+    if (interim) { finalTranscript += interim.textContent+' '; box.innerHTML=''; box.textContent=finalTranscript.trim(); }
+    updatePlaceholder(); updateWordCount();
+  }
+
+  const btn = document.getElementById('recBtn');
+  btn.className='btn-rec idle'; btn.textContent='🎙';
+  document.getElementById('recLabel').textContent='Registrazione completata ✓';
+  showToast('Registrazione salvata!','ok');
+}
+
+function saveRecording() {
+  const mime = audioChunks[0]?.type || 'audio/webm';
+  const blob = new Blob(audioChunks, { type: mime });
+  const url = URL.createObjectURL(blob);
+  recordings.push({ url, blob, dur: recSeconds, time: new Date().toLocaleTimeString('it-IT') });
+  renderAudioList();
+}
+
+function renderAudioList() {
+  const el = document.getElementById('audioList');
+  el.innerHTML = recordings.map((r,i) => `
+    <div class="audio-item">
+      <audio controls src="${r.url}"></audio>
+      <span class="a-meta">${Math.floor(r.dur/60)}:${String(r.dur%60).padStart(2,'0')} · ${r.time}</span>
+      <button class="btn btn-sm btn-outline" onclick="recordings.splice(${i},1);renderAudioList()">✕</button>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+// UPLOAD AUDIO & TRANSCRIBE
+// ══════════════════════════════════════════════
+function dragOver(e) { e.preventDefault(); document.getElementById('uploadArea').classList.add('drag-over'); }
+function dragLeave(e) { document.getElementById('uploadArea').classList.remove('drag-over'); }
+function dropFiles(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+}
+
+function handleFiles(files) {
+  for (const f of files) {
+    if (!f.type.startsWith('audio/') && !f.name.match(/\.(mp3|mp4|m4a|wav|ogg|webm|aac|flac)$/i)) continue;
+    uploadQueue.push({ id: Date.now()+Math.random(), file: f, name: f.name, size: f.size, status: 'pending', transcript: '' });
+  }
+  renderUploadQueue();
+  if (uploadQueue.length > 0) document.getElementById('transcribeAllBtn').style.display='flex';
+}
+
+function renderUploadQueue() {
+  const el = document.getElementById('uploadQueue');
+  el.innerHTML = uploadQueue.map((item, i) => {
+    const sizeMB = (item.size / 1024 / 1024).toFixed(1);
+    const statusText = { pending:'In attesa', running:'Trascrizione…', done:'✓ Completato', err:'✕ Errore' }[item.status];
+    const statusClass = item.status;
+    return `
+      <div class="upload-item" id="uitem-${i}">
+        <span style="font-size:1.1rem">🎵</span>
+        <span class="u-name">${item.name}</span>
+        <span class="u-size">${sizeMB} MB</span>
+        <span class="u-status ${statusClass}">${statusText}</span>
+        <button class="btn btn-sm btn-outline" onclick="removeUploadItem(${i})">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function removeUploadItem(i) {
+  uploadQueue.splice(i, 1);
+  renderUploadQueue();
+  if (uploadQueue.length === 0) document.getElementById('transcribeAllBtn').style.display='none';
+}
+
+async function transcribeAll() {
+  const btn = document.getElementById('transcribeAllBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Trascrizione in corso…';
+
+  for (let i = 0; i < uploadQueue.length; i++) {
+    const item = uploadQueue[i];
+    if (item.status === 'done') continue;
+
+    item.status = 'running';
+    renderUploadQueue();
+
+    try {
+      // Read file as base64
+      const b64 = await fileToBase64(item.file);
+      const mediaType = item.file.type || 'audio/mpeg';
+
+      // Call Claude with audio
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 2000,
+          messages: [{
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Trascrivi fedelmente il contenuto audio allegato in italiano. Restituisci solo il testo trascritto, senza commenti, senza intestazioni, senza spiegazioni. Se l'audio non è in italiano trascrivilo comunque e poi traduci in italiano."
+              },
+              {
+                type: "document",
+                source: {
+                  type: "base64",
+                  media_type: mediaType,
+                  data: b64
+                }
+              }
+            ]
+          }]
+        })
+      });
+
+      if (!res.ok) {
+        // Fallback: se API non supporta audio, usa approccio testuale
+        throw new Error(`API ${res.status}`);
+      }
+
+      const data = await res.json();
+      const transcript = data.content.map(c => c.text||'').join('\n').trim();
+      item.transcript = transcript;
+      item.status = 'done';
+
+      // Append to notes
+      appendToNotes(`\n\n--- Trascrizione: ${item.name} ---\n${transcript}`);
+
+    } catch(err) {
+      // Fallback: leggi l'audio localmente col Web Speech API se disponibile
+      item.status = 'err';
+      item.transcript = '';
+      showToast(`Errore trascrizione ${item.name}: il formato audio potrebbe non essere supportato.`, 'err');
+    }
+
+    renderUploadQueue();
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✨ Trascrivi tutti con AI';
+
+  const done = uploadQueue.filter(i => i.status === 'done').length;
+  if (done > 0) showToast(`✓ ${done} file trascritto${done>1?'i':''}!`, 'ok');
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = () => rej(new Error('Lettura file fallita'));
+    r.readAsDataURL(file);
+  });
+}
+
+function appendToNotes(text) {
+  const box = document.getElementById('notesBox');
+  const current = box.textContent;
+  box.textContent = (current + text).trim();
+  finalTranscript = box.textContent;
+  updatePlaceholder();
+  updateWordCount();
+}
+
+// ══════════════════════════════════════════════
+// NOTES HELPERS
+// ══════════════════════════════════════════════
+function updatePlaceholder() {
+  const has = document.getElementById('notesBox').textContent.trim().length > 0;
+  document.getElementById('notesPlaceholder').style.display = has ? 'none' : 'block';
+}
+
+function onNotesInput() { updatePlaceholder(); updateWordCount(); }
+
+function updateWordCount() {
+  const t = document.getElementById('notesBox').textContent.trim();
+  document.getElementById('wordCount').textContent = (t ? t.split(/\s+/).length : 0) + ' parole';
+}
+
+function getNotes() { return document.getElementById('notesBox').textContent.trim(); }
+
+function clearNotes() {
+  finalTranscript = '';
+  document.getElementById('notesBox').innerHTML = '';
+  updatePlaceholder(); updateWordCount();
+}
+
+function copyNotes() {
+  const t = getNotes();
+  if (!t) { showToast('Nessun testo da copiare.','err'); return; }
+  navigator.clipboard.writeText(t).then(() => showToast('✓ Testo copiato!','ok')).catch(() => fbCopy(t));
+}
+
+function copyAI() {
+  if (!aiText) { showToast('Nessun testo AI da copiare.','err'); return; }
+  navigator.clipboard.writeText(aiText).then(() => showToast('✓ Testo AI copiato!','ok')).catch(() => fbCopy(aiText));
+}
+
+function fbCopy(t) {
+  const ta = document.createElement('textarea');
+  ta.value = t; document.body.appendChild(ta); ta.select();
+  document.execCommand('copy'); document.body.removeChild(ta);
+  showToast('✓ Copiato!','ok');
+}
+
+function useAsNotes() {
+  if (!aiText) return;
+  document.getElementById('notesBox').textContent = aiText;
+  finalTranscript = aiText;
+  updatePlaceholder(); updateWordCount();
+  showToast('Testo AI usato come appunti!','ok');
+}
+
+// ══════════════════════════════════════════════
+// AI
+// ══════════════════════════════════════════════
+function selectMode(btn, mode) {
+  document.querySelectorAll('.ai-mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode = mode;
+}
+
+async function runAI() {
+  const notes = getNotes();
+  if (!notes) { showToast('Scrivi prima degli appunti!','err'); return; }
+
+  const tag = getTagById(selectedTagId);
+  const subject = tag ? tag.name : 'la lezione';
+
+  const prompts = {
+    organize: `Sei un assistente per studenti italiani. Organizza questi appunti di "${subject}" con titoli di sezione (##), sotto-titoli e punti chiave in elenco puntato. Rendi la struttura logica e facile da studiare. Solo italiano.\n\n${notes}`,
+    summary: `Sei un assistente per studenti italiani. Crea un riassunto chiaro di "${subject}": concetti fondamentali, definizioni chiave, esempi importanti. Solo italiano.\n\n${notes}`,
+    flashcards: `Sei un assistente per studenti italiani. Genera 10-12 flashcard da questi appunti di "${subject}".\nFormato:\nDOMANDA: …\nRISPOSTA: …\n---\nCopri tutti i concetti principali. Solo italiano.\n\n${notes}`,
+    mindmap: `Sei un assistente per studenti italiani. Crea una mappa concettuale testuale di "${subject}" usando:\n• CONCETTO PRINCIPALE\n  → Sotto-concetto\n    ◦ Dettaglio\nSolo italiano.\n\n${notes}`,
+    improve: `Sei un assistente per studenti italiani. Migliora questi appunti di "${subject}": correggi errori, completa frasi incomplete, aggiungi chiarezza, mantieni il contenuto ma rendilo professionale. Solo italiano.\n\n${notes}`,
+    quiz: `Sei un assistente per studenti italiani. Genera un quiz da "${subject}" con: 4 domande aperte, 4 a risposta multipla (A/B/C/D), 4 vero/falso. Risposte corrette alla fine. Solo italiano.\n\n${notes}`
+  };
+
+  const rb = document.getElementById('aiResultBox');
+  rb.innerHTML = `<div class="dots-loader"><span></span><span></span><span></span> Elaborazione in corso…</div>`;
+  document.getElementById('aiActions').style.display='none';
+  document.getElementById('runAiBtn').disabled=true;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-20250514",
+        max_tokens:1500,
+        messages:[{role:"user",content:prompts[currentMode]}]
+      })
+    });
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const data = await res.json();
+    aiText = data.content.map(c=>c.text||'').join('\n').trim();
+    rb.innerHTML = `<span class="ai-badge">✨ AI</span>${escHtml(aiText).replace(/\n/g,'<br>')}`;
+    document.getElementById('aiActions').style.display='flex';
+    showToast('Elaborazione completata!','ok');
+  } catch(e) {
+    rb.innerHTML = `<span style="color:var(--rust)">Errore AI: ${e.message}</span>`;
+    showToast('Errore nella chiamata AI.','err');
+  } finally {
+    document.getElementById('runAiBtn').disabled=false;
+  }
+}
+
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ══════════════════════════════════════════════
+// PDF EXPORT
+// ══════════════════════════════════════════════
+function exportPDF(source) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  const tag = getTagById(selectedTagId);
+  const title = document.getElementById('metaTitle').value || 'Appunti';
+  const subject = tag ? tag.name : '';
+  const dateVal = document.getElementById('metaDate').value;
+  const dateStr = dateVal
+    ? new Date(dateVal).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})
+    : new Date().toLocaleDateString('it-IT');
+  const text = source === 'notes' ? getNotes() : aiText;
+  if (!text) { showToast('Nessun testo da esportare.','err'); return; }
+
+  const W=210, ML=20, MR=18, contentW=W-ML-MR;
+  const tagRgb = tag ? hexRgb(tag.color) : {r:201,g:168,b:76};
+
+  // Cream background
+  doc.setFillColor(250,248,243);
+  doc.rect(0,0,W,297,'F');
+
+  // Lined paper effect
+  doc.setDrawColor(221,216,204);
+  doc.setLineWidth(0.18);
+  for (let y=40; y<290; y+=8) doc.line(ML,y,W-MR,y);
+
+  // Red margin
+  doc.setDrawColor(184,92,56);
+  doc.setLineWidth(0.35);
+  doc.line(ML-2,0,ML-2,297);
+
+  // Header bar
+  doc.setFillColor(26,18,8);
+  doc.rect(0,0,W,34,'F');
+
+  // Colored accent on header
+  doc.setFillColor(tagRgb.r,tagRgb.g,tagRgb.b);
+  doc.rect(0,0,4,34,'F');
+
+  // ClassNotes title in header
+  doc.setTextColor(250,248,243);
+  doc.setFontSize(16); doc.setFont('helvetica','bold');
+  doc.text('ClassNotes', ML+2, 16);
+  doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+  doc.setTextColor(138,122,90);
+  doc.text('Quaderno Digitale · v3', ML+2, 24);
+
+  if (subject) {
+    doc.setFillColor(tagRgb.r,tagRgb.g,tagRgb.b);
+    doc.roundedRect(ML+2,27,subject.length*2.2+8,5.5,1,1,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(6.5); doc.setFont('helvetica','bold');
+    doc.text(subject.toUpperCase(), ML+6, 31);
+  }
+
+  doc.setTextColor(180,170,150);
+  doc.setFontSize(8.5); doc.setFont('helvetica','normal');
+  doc.text(dateStr, W-MR, 20, {align:'right'});
+  if (source==='ai') {
+    doc.setTextColor(tagRgb.r,tagRgb.g,tagRgb.b);
+    doc.setFontSize(7); doc.setFont('helvetica','bold');
+    doc.text('✨ ELABORATO CON AI', W-MR, 29, {align:'right'});
+  }
+
+  let y = 46;
+
+  // Lesson title
+  doc.setTextColor(26,18,8);
+  doc.setFontSize(18); doc.setFont('helvetica','bold');
+  const titleLines = doc.splitTextToSize(title, contentW);
+  doc.text(titleLines, ML, y);
+  y += titleLines.length*8 + 3;
+
+  // Gold divider
+  doc.setDrawColor(tagRgb.r,tagRgb.g,tagRgb.b);
+  doc.setLineWidth(0.6);
+  doc.line(ML, y, W-MR, y);
+  y += 7;
+
+  // Body
+  doc.setTextColor(26,18,8);
+  doc.setFontSize(10.5); doc.setFont('helvetica','normal');
+  const lines = doc.splitTextToSize(text, contentW);
+
+  lines.forEach(line => {
+    if (y+6.5 > 282) {
+      doc.addPage();
+      doc.setFillColor(250,248,243); doc.rect(0,0,W,297,'F');
+      doc.setDrawColor(221,216,204); doc.setLineWidth(0.18);
+      for (let ly=18;ly<290;ly+=8) doc.line(ML,ly,W-MR,ly);
+      doc.setDrawColor(184,92,56); doc.setLineWidth(0.35);
+      doc.line(ML-2,0,ML-2,297);
+      y=20;
+      doc.setTextColor(26,18,8); doc.setFontSize(10.5); doc.setFont('helvetica','normal');
+    }
+    doc.text(line, ML, y);
+    y += 6.5;
+  });
+
+  // Footer
+  const total = doc.getNumberOfPages();
+  for (let i=1;i<=total;i++) {
+    doc.setPage(i);
+    doc.setFontSize(7.5); doc.setTextColor(160,148,128); doc.setFont('helvetica','italic');
+    doc.text([subject,title].filter(Boolean).join(' · '), ML, 292);
+    doc.text(`${i} / ${total}`, W-MR, 292, {align:'right'});
+  }
+
+  const fname=([subject,title,dateVal].filter(Boolean).join('_').replace(/[^a-zA-Z0-9_]/g,'_')||'classnotes')+'.pdf';
+  doc.save(fname);
+  showToast('📄 PDF esportato!','ok');
+}
+
+function hexRgb(hex) {
+  const r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return r ? {r:parseInt(r[1],16),g:parseInt(r[2],16),b:parseInt(r[3],16)} : {r:201,g:168,b:76};
+}
+
+// ══════════════════════════════════════════════
+// SESSIONS
+// ══════════════════════════════════════════════
+function getSessions() {
+  try { return JSON.parse(localStorage.getItem('cn_sessions')||'[]'); } catch { return []; }
+}
+
+function saveSession() {
+  const notes = getNotes();
+  const title = document.getElementById('metaTitle').value.trim();
+  if (!notes && !title) { showToast('Aggiungi un titolo o degli appunti prima di salvare.','err'); return; }
+  const sessions = getSessions();
+  sessions.unshift({
+    id: Date.now(),
+    title: title || 'Lezione senza titolo',
+    date: document.getElementById('metaDate').value,
+    tagId: selectedTagId,
+    notes, aiText,
+    savedAt: new Date().toISOString()
+  });
+  localStorage.setItem('cn_sessions', JSON.stringify(sessions));
+  showToast('✓ Lezione salvata!','ok');
+}
+
+function renderSessions() {
+  const all = getSessions();
+  const filtered = activeFilter ? all.filter(s => s.tagId === activeFilter) : all;
+
+  // Filter bar
+  const tags = getTags();
+  const filterEl = document.getElementById('sessionsFilter');
+  filterEl.innerHTML = `
+    <button class="filter-btn${!activeFilter?' active':''}" onclick="setFilter(null)">Tutte (${all.length})</button>
+    ${tags.map(t => {
+      const cnt = all.filter(s=>s.tagId===t.id).length;
+      return `<button class="filter-btn${activeFilter===t.id?' active':''}"
+        style="${activeFilter===t.id?`border-color:${t.color};color:${t.color}`:''}"
+        onclick="setFilter(${t.id})">
+        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${t.color};margin-right:4px"></span>
+        ${t.name} (${cnt})
+      </button>`;
+    }).join('')}
+  `;
+
+  const listEl = document.getElementById('sessionsList');
+  if (!filtered.length) {
+    listEl.innerHTML='<div class="empty-state">Nessuna lezione trovata.</div>'; return;
+  }
+  listEl.innerHTML = filtered.map(s => {
+    const tag = getTagById(s.tagId);
+    const dateStr = s.date ? new Date(s.date).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    const preview = s.notes?.substring(0,100)+(s.notes?.length>100?'…':'') || '';
+    const tagHtml = tag
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:600;background:${tag.color}18;color:${tag.color};border:1px solid ${tag.color}35">${tag.name}</span>`
+      : '';
+    const words = s.notes ? s.notes.split(/\s+/).filter(Boolean).length : 0;
+    return `
+      <div class="session-card" onclick="loadSession(${s.id})">
+        <div class="s-left">
+          <div class="s-title">${s.title}</div>
+          <div class="s-meta">
+            ${tagHtml}
+            ${dateStr ? `<span>${dateStr}</span>` : ''}
+            <span>${words} parole</span>
+          </div>
+          ${preview ? `<div class="s-preview">${preview}</div>` : ''}
+        </div>
+        <div class="s-actions" onclick="event.stopPropagation()">
+          <button class="s-btn" onclick="exportSessionPDF(${s.id})">📄</button>
+          <button class="s-btn del" onclick="deleteSession(${s.id})">🗑</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function setFilter(tagId) {
+  activeFilter = tagId;
+  renderSessions();
+}
+
+function loadSession(id) {
+  const s = getSessions().find(s => s.id===id);
+  if (!s) return;
+  document.getElementById('metaTitle').value = s.title||'';
+  document.getElementById('metaDate').value = s.date||'';
+  selectedTagId = s.tagId||null;
+  renderTagPills();
+  const box = document.getElementById('notesBox');
+  box.textContent = s.notes||'';
+  finalTranscript = s.notes||'';
+  aiText = s.aiText||'';
+  updatePlaceholder(); updateWordCount();
+  if (aiText) {
+    document.getElementById('aiResultBox').innerHTML=`<span class="ai-badge">✨ AI</span>${escHtml(aiText).replace(/\n/g,'<br>')}`;
+    document.getElementById('aiActions').style.display='flex';
+  }
+  switchTab('lezione',document.querySelector('.tab-btn'));
+  showToast('Lezione caricata!','ok');
+}
+
+function exportSessionPDF(id) {
+  const s = getSessions().find(s => s.id===id);
+  if (!s) return;
+  document.getElementById('metaTitle').value = s.title||'';
+  document.getElementById('metaDate').value = s.date||'';
+  selectedTagId = s.tagId||null;
+  document.getElementById('notesBox').textContent = s.notes||'';
+  setTimeout(() => exportPDF('notes'), 50);
+}
+
+function deleteSession(id) {
+  if (!confirm('Eliminare questa lezione?')) return;
+  localStorage.setItem('cn_sessions', JSON.stringify(getSessions().filter(s=>s.id!==id)));
+  renderSessions();
+  showToast('Lezione eliminata.','ok');
+}
+
+// ══════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name==='salvate') renderSessions();
+}
+
+// ══════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════
+let toastT = null;
+function showToast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className=`toast ${type} show`;
+  if (toastT) clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
