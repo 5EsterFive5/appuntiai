@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quaderno Digitale</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;800&display=swap');
+
+  :root {
+    --bg: #0e0e10;
+    --surface: #16161a;
+    --surface2: #1e1e24;
+    --border: #2a2a35;
+    --accent: #c8f560;
+    --accent2: #7b61ff;
+    --accent3: #ff6b6b;
+    --text: #e8e8f0;
+    --text2: #8888a0;
+    --text3: #555568;
+    --red: #ff4d4d;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* LAYOUT */
+  .app { display: flex; height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  .logo span { color: var(--text2); font-weight: 300; font-style: italic; }
+
+  .sidebar-section {
+    padding: 16px 20px 8px;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+
+  .subject-list { padding: 0 12px; }
+
+  .subject-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text2);
+    transition: all 0.15s;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+  }
+
+  .subject-chip:hover { background: var(--surface2); color: var(--text); }
+
+  .subject-chip.active {
+    background: var(--surface2);
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .subject-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .subject-count {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  .subject-delete {
+    margin-left: 4px;
+    color: var(--text3);
+    opacity: 0;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .subject-chip:hover .subject-delete { opacity: 1; }
+
+  .add-subject-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text3);
+    transition: all 0.15s;
+    margin: 0 12px;
+    font-family: 'DM Mono', monospace;
+    background: none;
+    border: 1px dashed var(--border);
+    width: calc(100% - 24px);
+    text-align: left;
+  }
+
+  .add-subject-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .new-lesson-btn {
+    margin: 16px 12px;
+    padding: 12px;
+    background: var(--accent);
+    color: #0e0e10;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .new-lesson-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+
+  .lessons-list { flex: 1; overflow-y: auto; padding: 4px 12px 12px; }
+
+  .lesson-item {
+    padding: 10px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 2px;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+
+  .lesson-item:hover { background: var(--surface2); }
+
+  .lesson-item.active {
+    background: var(--surface2);
+    border-color: var(--border);
+  }
+
+  .lesson-item-subject {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .lesson-item-date {
+    font-size: 11px;
+    color: var(--text2);
+    margin-bottom: 4px;
+  }
+
+  .lesson-item-preview {
+    font-size: 11px;
+    color: var(--text3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  /* MAIN */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  /* TOPBAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .topbar-meta { flex: 1; }
+
+  .topbar-subject {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+    font-weight: 500;
+  }
+
+  .topbar-date {
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .topbar-actions { display: flex; gap: 8px; }
+
+  .btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text2);
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  .btn:hover { background: var(--surface); color: var(--text); border-color: var(--text3); }
+  .btn.primary { background: var(--accent2); border-color: var(--accent2); color: white; }
+  .btn.primary:hover { filter: brightness(1.15); }
+  .btn.danger { background: transparent; border-color: var(--border); color: var(--red); }
+  .btn.danger:hover { background: var(--red); color: white; border-color: var(--red); }
+
+  /* RECORD AREA */
+  .record-area {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+  }
+
+  .record-btn {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 2px solid var(--red);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .record-btn:hover { background: rgba(255,77,77,0.1); }
+
+  .record-btn.recording {
+    background: var(--red);
+    border-color: var(--red);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,77,0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(255,77,77,0); }
+  }
+
+  .record-icon {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--red);
+    transition: all 0.2s;
+  }
+
+  .record-btn.recording .record-icon {
+    background: white;
+    border-radius: 3px;
+    width: 14px; height: 14px;
+  }
+
+  .record-status {
+    flex: 1;
+  }
+
+  .record-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .record-sublabel {
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .record-timer {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--text2);
+    letter-spacing: 2px;
+    min-width: 80px;
+    text-align: right;
+  }
+
+  .record-timer.active { color: var(--red); }
+
+  /* WAVEFORM */
+  .waveform-container {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 28px;
+    min-width: 80px;
+  }
+
+  .waveform-bar {
+    width: 3px;
+    border-radius: 2px;
+    background: var(--red);
+    opacity: 0.3;
+    transition: height 0.1s;
+  }
+
+  .recording .waveform-bar { opacity: 0.8; }
+
+  /* CONTENT */
+  .content-area {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    background: var(--surface);
+  }
+
+  .tab {
+    padding: 12px 16px;
+    font-size: 12px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: var(--text2);
+    transition: all 0.15s;
+    margin-bottom: -1px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-panel {
+    flex: 1;
+    overflow-y: auto;
+    display: none;
+    padding: 28px;
+  }
+
+  .tab-panel.active { display: block; }
+
+  /* TRANSCRIPT */
+  .transcript-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    min-height: 200px;
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-weight: 300;
+    line-height: 1.8;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .transcript-live {
+    display: inline;
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .transcript-placeholder {
+    color: var(--text3);
+    font-style: italic;
+    font-size: 14px;
+  }
+
+  .transcript-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* AI NOTES */
+  .ai-section { margin-top: 0; }
+
+  .ai-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .ai-btn {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text2);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ai-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--accent2); }
+  .ai-btn.loading { opacity: 0.6; pointer-events: none; }
+
+  .ai-result-box {
+    background: var(--surface);
+    border: 1px solid var(--accent2);
+    border-radius: var(--radius);
+    padding: 24px;
+    min-height: 100px;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1.85;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    position: relative;
+  }
+
+  .ai-result-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  .ai-placeholder {
+    color: var(--text3);
+    font-style: italic;
+    font-size: 13px;
+  }
+
+  .ai-result-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* SUBJECT SELECT MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    width: 380px;
+    max-width: 90vw;
+    transform: translateY(10px);
+    transition: transform 0.2s;
+  }
+
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 20px;
+  }
+
+  .modal input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    margin-bottom: 12px;
+  }
+
+  .modal input:focus { border-color: var(--accent); }
+
+  .color-picker {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .color-swatch {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.15s;
+  }
+
+  .color-swatch.selected { border-color: white; transform: scale(1.15); }
+
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* SUBJECT ASSIGN */
+  .subject-assign {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+  }
+
+  .subject-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+    color: var(--text3);
+    text-align: center;
+    padding: 40px;
+  }
+
+  .empty-icon {
+    font-size: 48px;
+    opacity: 0.3;
+  }
+
+  .empty-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--text2);
+  }
+
+  .empty-sub { font-size: 12px; line-height: 1.6; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* LOADING DOTS */
+  .loading-dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+
+  @keyframes dots {
+    0%   { content: ''; }
+    25%  { content: '.'; }
+    50%  { content: '..'; }
+    75%  { content: '...'; }
+  }
+
+  /* ALERT */
+  .alert {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 12px;
+    color: var(--text);
+    z-index: 999;
+    transform: translateY(60px);
+    opacity: 0;
+    transition: all 0.3s;
+    max-width: 320px;
+  }
+
+  .alert.show { transform: translateY(0); opacity: 1; }
+  .alert.success { border-color: var(--accent); }
+  .alert.error { border-color: var(--red); }
+
+  /* NO LESSON */
+  #no-lesson {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">quaderno <span>digitale</span></div>
+    </div>
+
+    <button class="new-lesson-btn" onclick="newLesson()">
+      <span>+</span> Nuova Lezione
+    </button>
+
+    <div class="sidebar-section">Materie</div>
+    <div class="subject-list" id="subjectList"></div>
+    <button class="add-subject-btn" onclick="openAddSubject()">+ aggiungi materia</button>
+
+    <div class="sidebar-section" style="margin-top:12px">Lezioni</div>
+    <div class="lessons-list" id="lessonsList"></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="mainArea">
+    <div id="no-lesson">
+      <div class="empty-state">
+        <div class="empty-icon">📖</div>
+        <div class="empty-title">Nessuna lezione selezionata</div>
+        <div class="empty-sub">Crea una nuova lezione o selezionane una dalla lista</div>
+      </div>
+    </div>
+
+    <div id="lessonArea" style="display:none; flex-direction:column; height:100%;">
+      <!-- TOPBAR -->
+      <div class="topbar">
+        <div class="topbar-meta">
+          <div class="topbar-subject" id="lessonSubjectLabel">—</div>
+          <div class="topbar-date" id="lessonDateLabel">—</div>
+        </div>
+        <div class="subject-assign">
+          <select class="subject-select" id="subjectSelect" onchange="assignSubject()">
+            <option value="">Nessuna materia</option>
+          </select>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn danger" onclick="deleteLesson()">🗑 Elimina</button>
+        </div>
+      </div>
+
+      <!-- RECORD -->
+      <div class="record-area">
+        <button class="record-btn" id="recordBtn" onclick="toggleRecord()">
+          <div class="record-icon"></div>
+        </button>
+        <div class="record-status">
+          <div class="record-label" id="recordLabel">Pronto a registrare</div>
+          <div class="record-sublabel" id="recordSub">Premi il pulsante per avviare la trascrizione live</div>
+        </div>
+        <div class="waveform-container" id="waveform">
+          <div class="waveform-bar" style="height:6px"></div>
+          <div class="waveform-bar" style="height:10px"></div>
+          <div class="waveform-bar" style="height:14px"></div>
+          <div class="waveform-bar" style="height:8px"></div>
+          <div class="waveform-bar" style="height:18px"></div>
+          <div class="waveform-bar" style="height:10px"></div>
+          <div class="waveform-bar" style="height:6px"></div>
+          <div class="waveform-bar" style="height:14px"></div>
+          <div class="waveform-bar" style="height:10px"></div>
+          <div class="waveform-bar" style="height:8px"></div>
+        </div>
+        <div class="record-timer" id="recordTimer">00:00</div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('transcript')">📝 Trascrizione</div>
+        <div class="tab" onclick="switchTab('ai')">✨ Appunti AI</div>
+      </div>
+
+      <!-- TRANSCRIPT TAB -->
+      <div class="tab-panel active content-area" id="tab-transcript">
+        <div class="transcript-box" id="transcriptBox">
+          <span class="transcript-placeholder">La trascrizione apparirà qui durante la registrazione...</span>
+        </div>
+        <div class="transcript-actions">
+          <button class="btn" onclick="copyTranscript()">📋 Copia testo</button>
+          <button class="btn" onclick="exportTranscriptPDF()">📄 Esporta PDF</button>
+        </div>
+      </div>
+
+      <!-- AI TAB -->
+      <div class="tab-panel" id="tab-ai" style="overflow-y:auto;">
+        <div class="ai-section">
+          <div class="ai-controls">
+            <button class="ai-btn" onclick="aiAction('riassumi')">📌 Riassumi</button>
+            <button class="ai-btn" onclick="aiAction('organizza')">🗂 Organizza per punti</button>
+            <button class="ai-btn" onclick="aiAction('concetti')">🧠 Concetti chiave</button>
+            <button class="ai-btn" onclick="aiAction('studia')">📚 Schema di studio</button>
+            <button class="ai-btn" onclick="aiAction('domande')">❓ Domande di ripasso</button>
+          </div>
+          <div class="ai-result-label" id="aiLabel">Risultato AI</div>
+          <div class="ai-result-box" id="aiResult">
+            <span class="ai-placeholder">Seleziona un'azione per elaborare la trascrizione con l'AI...</span>
+          </div>
+          <div class="ai-result-actions" id="aiActions" style="display:none;">
+            <button class="btn" onclick="copyAI()">📋 Copia testo</button>
+            <button class="btn" onclick="exportAIPDF()">📄 Esporta PDF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ADD SUBJECT MODAL -->
+<div class="modal-overlay" id="subjectModal">
+  <div class="modal">
+    <div class="modal-title">Nuova Materia</div>
+    <input type="text" id="subjectNameInput" placeholder="Nome materia..." maxlength="40" onkeydown="if(event.key==='Enter')saveSubject()">
+    <div class="color-picker" id="colorPicker"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Annulla</button>
+      <button class="btn primary" onclick="saveSubject()">Crea Materia</button>
+    </div>
+  </div>
+</div>
+
+<!-- ALERT -->
+<div class="alert" id="alert"></div>
+
+<script>
+// ===== STATE =====
+let state = {
+  lessons: [],
+  subjects: [],
+  currentLessonId: null,
+  filterSubject: null
+};
+
+// Speech Recognition
+let recognition = null;
+let isRecording = false;
+let recordInterval = null;
+let recordSeconds = 0;
+let liveText = '';
+let finalText = '';
+let waveInterval = null;
+let restartGuard = false;   // prevents restart loop on intentional stop
+let restartTimeout = null;  // debounce for unexpected stops
+
+// Colors palette
+const COLORS = ['#c8f560','#7b61ff','#ff6b6b','#60c8f5','#f5c860','#f560c8','#60f5c8','#c860f5','#f58760','#60f587'];
+let selectedColor = COLORS[0];
+
+// ===== INIT =====
+function init() {
+  loadState();
+  renderSubjects();
+  renderLessons();
+  buildColorPicker();
+  initSpeechRecognition();
+}
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('quaderno_state');
+    if (s) state = JSON.parse(s);
+  } catch(e) {}
+}
+
+function saveState() {
+  localStorage.setItem('quaderno_state', JSON.stringify(state));
+}
+
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+// ===== SUBJECTS =====
+function buildColorPicker() {
+  const cp = document.getElementById('colorPicker');
+  cp.innerHTML = COLORS.map((c,i) => `
+    <div class="color-swatch ${i===0?'selected':''}" style="background:${c}" onclick="selectColor('${c}', this)"></div>
+  `).join('');
+}
+
+function selectColor(color, el) {
+  selectedColor = color;
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function openAddSubject() {
+  document.getElementById('subjectModal').classList.add('open');
+  document.getElementById('subjectNameInput').value = '';
+  document.getElementById('subjectNameInput').focus();
+  selectedColor = COLORS[0];
+  buildColorPicker();
+}
+
+function closeModal() {
+  document.getElementById('subjectModal').classList.remove('open');
+}
+
+function saveSubject() {
+  const name = document.getElementById('subjectNameInput').value.trim();
+  if (!name) { showAlert('Inserisci un nome per la materia', 'error'); return; }
+  state.subjects.push({ id: generateId(), name, color: selectedColor });
+  saveState();
+  renderSubjects();
+  updateSubjectSelect();
+  closeModal();
+  showAlert('Materia creata ✓', 'success');
+}
+
+function deleteSubject(id) {
+  state.subjects = state.subjects.filter(s => s.id !== id);
+  state.lessons.forEach(l => { if (l.subjectId === id) l.subjectId = null; });
+  if (state.filterSubject === id) state.filterSubject = null;
+  saveState();
+  renderSubjects();
+  renderLessons();
+  updateSubjectSelect();
+}
+
+function filterBySubject(id) {
+  state.filterSubject = state.filterSubject === id ? null : id;
+  renderSubjects();
+  renderLessons();
+}
+
+function renderSubjects() {
+  const list = document.getElementById('subjectList');
+  const all = `<div class="subject-chip ${!state.filterSubject?'active':''}" onclick="filterBySubject(null)">
+    <div class="subject-dot" style="background:var(--text3)"></div>
+    <span>Tutte le lezioni</span>
+    <span class="subject-count">${state.lessons.length}</span>
+  </div>`;
+  const items = state.subjects.map(s => {
+    const count = state.lessons.filter(l => l.subjectId === s.id).length;
+    return `<div class="subject-chip ${state.filterSubject===s.id?'active':''}" onclick="filterBySubject('${s.id}')">
+      <div class="subject-dot" style="background:${s.color}"></div>
+      <span>${s.name}</span>
+      <span class="subject-count">${count}</span>
+      <span class="subject-delete" onclick="event.stopPropagation();deleteSubject('${s.id}')">×</span>
+    </div>`;
+  }).join('');
+  list.innerHTML = all + items;
+}
+
+function updateSubjectSelect() {
+  const sel = document.getElementById('subjectSelect');
+  const val = sel.value;
+  sel.innerHTML = '<option value="">Nessuna materia</option>' +
+    state.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  sel.value = val;
+}
+
+function assignSubject() {
+  if (!state.currentLessonId) return;
+  const lesson = state.lessons.find(l => l.id === state.currentLessonId);
+  if (lesson) {
+    lesson.subjectId = document.getElementById('subjectSelect').value || null;
+    saveState();
+    renderSubjects();
+    renderLessons();
+    updateTopbar();
+  }
+}
+
+// ===== LESSONS =====
+function newLesson() {
+  const id = generateId();
+  const lesson = {
+    id,
+    subjectId: state.filterSubject || null,
+    date: new Date().toISOString(),
+    transcript: '',
+    aiNotes: ''
+  };
+  state.lessons.unshift(lesson);
+  saveState();
+  renderSubjects();
+  renderLessons();
+  openLesson(id);
+}
+
+function deleteLesson() {
+  if (!state.currentLessonId) return;
+  if (!confirm('Eliminare questa lezione?')) return;
+  state.lessons = state.lessons.filter(l => l.id !== state.currentLessonId);
+  state.currentLessonId = null;
+  saveState();
+  renderSubjects();
+  renderLessons();
+  document.getElementById('no-lesson').style.display = 'flex';
+  document.getElementById('lessonArea').style.display = 'none';
+}
+
+function renderLessons() {
+  const list = document.getElementById('lessonsList');
+  let lessons = [...state.lessons];
+  if (state.filterSubject) lessons = lessons.filter(l => l.subjectId === state.filterSubject);
+  // Sort by date desc
+  lessons.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  if (!lessons.length) {
+    list.innerHTML = '<div style="padding:12px;font-size:11px;color:var(--text3);text-align:center;">Nessuna lezione</div>';
+    return;
+  }
+
+  list.innerHTML = lessons.map(l => {
+    const subj = state.subjects.find(s => s.id === l.subjectId);
+    const d = new Date(l.date);
+    const dateStr = d.toLocaleDateString('it-IT', { day:'2-digit', month:'short', year:'numeric' });
+    const preview = l.transcript ? l.transcript.slice(0,60) + (l.transcript.length > 60 ? '…' : '') : 'Lezione vuota';
+    const color = subj ? subj.color : 'var(--text3)';
+    return `<div class="lesson-item ${l.id===state.currentLessonId?'active':''}" onclick="openLesson('${l.id}')">
+      <div class="lesson-item-subject" style="color:${color}">${subj ? subj.name : 'Senza materia'}</div>
+      <div class="lesson-item-date">${dateStr}</div>
+      <div class="lesson-item-preview">${preview}</div>
+    </div>`;
+  }).join('');
+}
+
+function openLesson(id) {
+  if (isRecording) stopRecording();
+  state.currentLessonId = id;
+  saveState();
+  renderLessons();
+  const lesson = state.lessons.find(l => l.id === id);
+  if (!lesson) return;
+  document.getElementById('no-lesson').style.display = 'none';
+  document.getElementById('lessonArea').style.display = 'flex';
+  updateTopbar();
+  updateSubjectSelect();
+  document.getElementById('subjectSelect').value = lesson.subjectId || '';
+  renderTranscript(lesson.transcript, '');
+  renderAI(lesson.aiNotes || '');
+  switchTab('transcript');
+  resetRecording();
+}
+
+function updateTopbar() {
+  const lesson = state.lessons.find(l => l.id === state.currentLessonId);
+  if (!lesson) return;
+  const subj = state.subjects.find(s => s.id === lesson.subjectId);
+  const d = new Date(lesson.date);
+  const dateStr = d.toLocaleDateString('it-IT', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+  document.getElementById('lessonSubjectLabel').textContent = subj ? subj.name.toUpperCase() : 'SENZA MATERIA';
+  document.getElementById('lessonSubjectLabel').style.color = subj ? subj.color : 'var(--text3)';
+  document.getElementById('lessonDateLabel').textContent = dateStr;
+}
+
+// ===== TABS =====
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['transcript','ai'][i] === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+// ===== SPEECH RECOGNITION =====
+function createRecognitionInstance() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) return null;
+
+  const r = new SpeechRecognition();
+  r.lang = 'it-IT';
+  r.continuous = true;
+  r.interimResults = true;
+  r.maxAlternatives = 1;
+
+  r.onresult = (event) => {
+    // event.resultIndex tells us exactly where new results start — never re-read old ones
+    let interim = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalText += t + ' ';
+        saveCurrentTranscript();
+      } else {
+        interim += t;
+      }
+    }
+    liveText = interim;
+    renderTranscript(finalText, liveText);
+  };
+
+  r.onerror = (event) => {
+    console.error('Speech error:', event.error);
+    if (event.error === 'not-allowed') {
+      showAlert('Permesso microfono negato', 'error');
+      stopRecording();
+    } else if (event.error === 'network') {
+      // network errors can self-resolve, let onend handle restart
+    } else if (event.error === 'aborted') {
+      // intentional stop, ignore
+    }
+    // 'no-speech' is normal silence, ignore
+  };
+
+  r.onend = () => {
+    // Only restart if still recording and stop was NOT intentional
+    if (!isRecording || restartGuard) return;
+    // Debounce: wait 300ms before restarting to avoid rapid loops
+    clearTimeout(restartTimeout);
+    restartTimeout = setTimeout(() => {
+      if (!isRecording || restartGuard) return;
+      // Create a FRESH instance to reset resultIndex to 0 safely,
+      // but finalText already holds everything — new instance starts clean.
+      recognition = createRecognitionInstance();
+      try { recognition.start(); } catch(e) { console.error('Restart failed', e); }
+    }, 300);
+  };
+
+  return r;
+}
+
+function initSpeechRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    document.getElementById('recordSub').textContent = '⚠️ Browser non supporta la registrazione. Usa Chrome o Edge.';
+    document.getElementById('recordBtn').style.opacity = '0.4';
+    document.getElementById('recordBtn').style.pointerEvents = 'none';
+    return;
+  }
+  recognition = createRecognitionInstance();
+}
+
+function toggleRecord() {
+  if (isRecording) stopRecording();
+  else startRecording();
+}
+
+function startRecording() {
+  if (!recognition) return;
+  if (!state.currentLessonId) { showAlert('Apri o crea una lezione prima', 'error'); return; }
+  isRecording = true;
+  restartGuard = false;
+  liveText = '';
+  // Load existing transcript — new recognition instance starts from index 0,
+  // so finalText is pre-seeded and onresult only ever appends new content.
+  const lesson = state.lessons.find(l => l.id === state.currentLessonId);
+  finalText = lesson ? (lesson.transcript || '') : '';
+
+  // Always use a fresh instance so resultIndex starts at 0
+  recognition = createRecognitionInstance();
+
+  document.getElementById('recordBtn').classList.add('recording');
+  document.getElementById('recordLabel').textContent = 'Registrazione in corso';
+  document.getElementById('recordSub').textContent = 'Parla chiaramente. La trascrizione è live.';
+  document.getElementById('recordTimer').classList.add('active');
+
+  recognition.start();
+
+  recordSeconds = 0;
+  recordInterval = setInterval(() => {
+    recordSeconds++;
+    const m = String(Math.floor(recordSeconds / 60)).padStart(2,'0');
+    const s = String(recordSeconds % 60).padStart(2,'0');
+    document.getElementById('recordTimer').textContent = m + ':' + s;
+  }, 1000);
+
+  // Waveform animation
+  const bars = document.querySelectorAll('.waveform-bar');
+  waveInterval = setInterval(() => {
+    bars.forEach(b => {
+      const h = Math.random() * 20 + 4;
+      b.style.height = h + 'px';
+    });
+  }, 100);
+}
+
+function stopRecording() {
+  isRecording = false;
+  restartGuard = true;          // block any pending onend restart
+  clearTimeout(restartTimeout);
+  liveText = '';
+  if (recognition) { try { recognition.stop(); } catch(e) {} }
+  clearInterval(recordInterval);
+  clearInterval(waveInterval);
+
+  document.getElementById('recordBtn').classList.remove('recording');
+  document.getElementById('recordLabel').textContent = 'Registrazione terminata';
+  document.getElementById('recordSub').textContent = 'Premi il pulsante per riprendere';
+  document.getElementById('recordTimer').classList.remove('active');
+
+  const bars = document.querySelectorAll('.waveform-bar');
+  bars.forEach((b,i) => { b.style.height = [6,10,14,8,18,10,6,14,10,8][i] + 'px'; });
+
+  saveCurrentTranscript();
+  renderTranscript(finalText, '');
+  renderLessons();
+}
+
+function resetRecording() {
+  isRecording = false;
+  restartGuard = true;
+  clearTimeout(restartTimeout);
+  liveText = '';
+  finalText = '';
+  clearInterval(recordInterval);
+  clearInterval(waveInterval);
+  recordSeconds = 0;
+  document.getElementById('recordBtn').classList.remove('recording');
+  document.getElementById('recordLabel').textContent = 'Pronto a registrare';
+  document.getElementById('recordSub').textContent = 'Premi il pulsante per avviare la trascrizione live';
+  document.getElementById('recordTimer').textContent = '00:00';
+  document.getElementById('recordTimer').classList.remove('active');
+}
+
+function saveCurrentTranscript() {
+  if (!state.currentLessonId) return;
+  const lesson = state.lessons.find(l => l.id === state.currentLessonId);
+  if (lesson) {
+    lesson.transcript = finalText.trim();
+    saveState();
+  }
+}
+
+function renderTranscript(final, live) {
+  const box = document.getElementById('transcriptBox');
+  if (!final && !live) {
+    box.innerHTML = '<span class="transcript-placeholder">La trascrizione apparirà qui durante la registrazione...</span>';
+    return;
+  }
+  const finalEl = final ? document.createTextNode(final) : null;
+  const liveEl = live ? `<span class="transcript-live">${live}</span>` : '';
+  box.innerHTML = (final || '') + liveEl;
+}
+
+function renderAI(text) {
+  const box = document.getElementById('aiResult');
+  const actions = document.getElementById('aiActions');
+  if (!text) {
+    box.innerHTML = '<span class="ai-placeholder">Seleziona un\'azione per elaborare la trascrizione con l\'AI...</span>';
+    actions.style.display = 'none';
+  } else {
+    box.innerHTML = escapeHtml(text).replace(/\n/g, '<br>');
+    actions.style.display = 'flex';
+  }
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ===== AI =====
+async function aiAction(type) {
+  const lesson = state.lessons.find(l => l.id === state.currentLessonId);
+  if (!lesson || !lesson.transcript) {
+    showAlert('Nessuna trascrizione da elaborare', 'error');
+    return;
+  }
+
+  const prompts = {
+    riassumi: `Sei un assistente scolastico. Riassumi in modo chiaro e conciso la seguente lezione registrata. Mantieni i punti essenziali e scrivi in italiano. Trascrizione:\n\n${lesson.transcript}`,
+    organizza: `Sei un assistente scolastico. Organizza la seguente lezione in punti e sottopunti chiari, con una struttura logica. Usa titoli per le sezioni principali. Scrivi in italiano. Trascrizione:\n\n${lesson.transcript}`,
+    concetti: `Sei un assistente scolastico. Estrai e spiega i concetti chiave dalla seguente lezione registrata. Per ogni concetto dai una breve spiegazione. Scrivi in italiano. Trascrizione:\n\n${lesson.transcript}`,
+    studia: `Sei un assistente scolastico. Crea uno schema di studio dettagliato dalla seguente lezione, utile per la preparazione di un esame o interrogazione. Usa titoli, punti e sottopunti. Scrivi in italiano. Trascrizione:\n\n${lesson.transcript}`,
+    domande: `Sei un assistente scolastico. Genera 8-10 domande di ripasso basate sulla seguente lezione registrata. Per ogni domanda include anche la risposta sintetica. Scrivi in italiano. Trascrizione:\n\n${lesson.transcript}`
+  };
+
+  const labels = {
+    riassumi: '📌 Riassunto',
+    organizza: '🗂 Punti Organizzati',
+    concetti: '🧠 Concetti Chiave',
+    studia: '📚 Schema di Studio',
+    domande: '❓ Domande di Ripasso'
+  };
+
+  const box = document.getElementById('aiResult');
+  const actions = document.getElementById('aiActions');
+  document.getElementById('aiLabel').textContent = labels[type];
+  box.innerHTML = '<span class="ai-placeholder loading-dots">Elaborazione AI in corso</span>';
+  actions.style.display = 'none';
+
+  // Disable all AI buttons
+  document.querySelectorAll('.ai-btn').forEach(b => b.classList.add('loading'));
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompts[type] }]
+      })
+    });
+    const data = await response.json();
+    const result = data.content?.map(c => c.text || '').join('\n') || 'Nessuna risposta.';
+    lesson.aiNotes = result;
+    saveState();
+    renderAI(result);
+    showAlert('Elaborazione completata ✓', 'success');
+  } catch(e) {
+    box.innerHTML = '<span class="ai-placeholder" style="color:var(--red)">Errore durante l\'elaborazione. Controlla la connessione.</span>';
+    showAlert('Errore AI', 'error');
+  } finally {
+    document.querySelectorAll('.ai-btn').forEach(b => b.classList.remove('loading'));
+  }
+}
+
+// ===== COPY =====
+function copyTranscript() {
+  const lesson = state.lessons.find(l => l.id === state.currentLessonId);
+  if (!lesson || !lesson.transcript) { showAlert('Nessun testo da copiare', 'error'); return; }
+  navigator.clipboard.writeText(lesson.transcript).then(() => showAlert('Testo copiato ✓', 'success'));
+}
+
+function copyAI() {
+  const lesson = state.lessons.find(l => l.id === state.currentLessonId);
+  if (!lesson || !lesson.aiNotes) { showAlert('Nessun testo da copiare', 'error'); return; }
+  navigator.clipboard.writeText(lesson.aiNotes).then(() => showAlert('Testo copiato ✓', 'success'));
+}
+
+// ===== PDF EXPORT =====
+function exportTranscriptPDF() {
+  const lesson = state.lessons.find(l => l.id === state.currentLessonId);
+  if (!lesson || !lesson.transcript) { showAlert('Nessuna trascrizione da esportare', 'error'); return; }
+  const subj = state.subjects.find(s => s.id === lesson.subjectId);
+  const d = new Date(lesson.date);
+  const dateStr = d.toLocaleDateString('it-IT', { day:'2-digit', month:'long', year:'numeric' });
+  const title = (subj ? subj.name + ' — ' : '') + dateStr;
+  generatePDF(title, 'Trascrizione Lezione', lesson.transcript);
+}
+
+function exportAIPDF() {
+  const lesson = state.lessons.find(l => l.id === state.currentLessonId);
+  if (!lesson || !lesson.aiNotes) { showAlert('Nessun contenuto AI da esportare', 'error'); return; }
+  const subj = state.subjects.find(s => s.id === lesson.subjectId);
+  const d = new Date(lesson.date);
+  const dateStr = d.toLocaleDateString('it-IT', { day:'2-digit', month:'long', year:'numeric' });
+  const title = (subj ? subj.name + ' — ' : '') + dateStr;
+  generatePDF(title, 'Appunti AI', lesson.aiNotes);
+}
+
+function generatePDF(title, subtitle, text) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const contentW = pageW - margin * 2;
+
+  // Header
+  doc.setFillColor(14, 14, 16);
+  doc.rect(0, 0, pageW, 40, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(200, 245, 96);
+  doc.text('Quaderno Digitale', margin, 20);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(136, 136, 160);
+  doc.text(title, margin, 30);
+  doc.setFontSize(9);
+  doc.text(subtitle, margin, 38);
+
+  // Content
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(30, 30, 30);
+
+  const lines = doc.splitTextToSize(text, contentW);
+  let y = 55;
+  const lineH = 6;
+
+  lines.forEach(line => {
+    if (y + lineH > pageH - 15) {
+      doc.addPage();
+      // Header on new page
+      doc.setFillColor(14, 14, 16);
+      doc.rect(0, 0, pageW, 18, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(200, 245, 96);
+      doc.text('Quaderno Digitale — ' + title, margin, 12);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(30, 30, 30);
+      y = 28;
+    }
+    doc.text(line, margin, y);
+    y += lineH;
+  });
+
+  // Footer
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(170, 170, 190);
+    doc.text(`Pagina ${i} di ${pageCount}`, pageW - margin, pageH - 10, { align: 'right' });
+    const today = new Date().toLocaleDateString('it-IT');
+    doc.text(`Esportato il ${today}`, margin, pageH - 10);
+  }
+
+  const filename = title.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_') + '_' + subtitle.replace(/\s/g,'_') + '.pdf';
+  doc.save(filename);
+  showAlert('PDF esportato ✓', 'success');
+}
+
+// ===== ALERT =====
+function showAlert(msg, type) {
+  const el = document.getElementById('alert');
+  el.textContent = msg;
+  el.className = 'alert ' + (type || '');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// Close modal on overlay click
+document.getElementById('subjectModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>
